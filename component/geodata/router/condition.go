@@ -3,6 +3,8 @@ package router
 import (
 	"fmt"
 	"net/netip"
+	"runtime"
+	"runtime/debug"
 	"strings"
 
 	"github.com/metacubex/mihomo/component/cidr"
@@ -64,7 +66,7 @@ func NewSuccinctMatcherGroup(domains []*Domain) (DomainMatcher, error) {
 	m := &succinctDomainMatcher{
 		count: len(domains),
 	}
-	for _, d := range domains {
+	for i, d := range domains {
 		switch d.Type {
 		case Domain_Plain, Domain_Regex:
 			matcher, err := matcherTypeMap[d.Type].New(d.Value)
@@ -85,8 +87,17 @@ func NewSuccinctMatcherGroup(domains []*Domain) (DomainMatcher, error) {
 				return nil, err
 			}
 		}
+		domains[i] = nil
+		if i%10000 == 0 {
+			runtime.GC()
+			debug.FreeOSMemory()
+		}
 	}
+	runtime.GC()
+	debug.FreeOSMemory()
 	m.set = t.NewDomainSet()
+	runtime.GC()
+	debug.FreeOSMemory()
 	return m, nil
 }
 
@@ -97,7 +108,7 @@ type v2rayDomainMatcher struct {
 
 func NewMphMatcherGroup(domains []*Domain) (DomainMatcher, error) {
 	g := strmatcher.NewMphMatcherGroup()
-	for _, d := range domains {
+	for i, d := range domains {
 		matcherType, f := matcherTypeMap[d.Type]
 		if !f {
 			return nil, fmt.Errorf("unsupported domain type %v", d.Type)
@@ -106,8 +117,17 @@ func NewMphMatcherGroup(domains []*Domain) (DomainMatcher, error) {
 		if err != nil {
 			return nil, err
 		}
+		domains[i] = nil
+		if i%10000 == 0 {
+			runtime.GC()
+			debug.FreeOSMemory()
+		}
 	}
+	runtime.GC()
+	debug.FreeOSMemory()
 	g.Build()
+	runtime.GC()
+	debug.FreeOSMemory()
 	return &v2rayDomainMatcher{
 		matchers: g,
 		count:    len(domains),
@@ -154,6 +174,8 @@ func (m *geoIPMatcher) Count() int {
 }
 
 func NewGeoIPMatcher(cidrList []*CIDR) (IPMatcher, error) {
+	defer runtime.GC()
+	defer debug.FreeOSMemory()
 	m := &geoIPMatcher{
 		cidrSet: cidr.NewIpCidrSet(),
 		count:   len(cidrList),
@@ -168,6 +190,8 @@ func NewGeoIPMatcher(cidrList []*CIDR) (IPMatcher, error) {
 			return nil, fmt.Errorf("error when loading GeoIP: %w", err)
 		}
 	}
+	runtime.GC()
+	debug.FreeOSMemory()
 	err := m.cidrSet.Merge()
 	if err != nil {
 		return nil, err
