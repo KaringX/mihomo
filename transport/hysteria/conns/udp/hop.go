@@ -22,9 +22,10 @@ const (
 // ObfsUDPHopClientPacketConn is the UDP port-hopping packet connection for client side.
 // It hops to a different local & server port every once in a while.
 type ObfsUDPHopClientPacketConn struct {
-	serverAddr  net.Addr // Combined udpHopAddr
-	serverAddrs []net.Addr
-	hopInterval time.Duration
+	serverAddr       net.Addr // Combined udpHopAddr
+	serverAddrsIp    net.IP
+	serverAddrsPorts []uint16
+	hopInterval      time.Duration
 
 	obfs obfs.Obfuscator
 
@@ -73,22 +74,20 @@ func NewObfsUDPHopClientPacketConn(server string, serverPorts string, hopInterva
 	if err != nil {
 		return nil, err
 	}
-	serverAddrs := make([]net.Addr, len(ports))
+	serverAddrsPorts := make([]uint16, len(ports))
 	for i, port := range ports {
-		serverAddrs[i] = &net.UDPAddr{
-			IP:   net.ParseIP(ip),
-			Port: int(port),
-		}
+		serverAddrsPorts[i] = port
 	}
 	hopAddr := udpHopAddr(server)
 	conn := &ObfsUDPHopClientPacketConn{
-		serverAddr:  &hopAddr,
-		serverAddrs: serverAddrs,
-		hopInterval: hopInterval,
-		obfs:        obfs,
-		addrIndex:   randv2.IntN(len(serverAddrs)),
-		recvQueue:   make(chan *udpPacket, packetQueueSize),
-		closeChan:   make(chan struct{}),
+		serverAddr:       &hopAddr,
+		serverAddrsIp:    net.ParseIP(ip),
+		serverAddrsPorts: serverAddrsPorts,
+		hopInterval:      hopInterval,
+		obfs:             obfs,
+		addrIndex:        randv2.IntN(len(serverAddrsPorts)),
+		recvQueue:        make(chan *udpPacket, packetQueueSize),
+		closeChan:        make(chan struct{}),
 		bufPool: sync.Pool{
 			New: func() interface{} {
 				return make([]byte, udpBufferSize)
@@ -177,7 +176,7 @@ func (c *ObfsUDPHopClientPacketConn) hop(dialer utils.PacketDialer, rAddr net.Ad
 		_ = trySetPacketConnWriteBuffer(c.currentConn, c.writeBufferSize)
 	}
 	go c.recvRoutine(c.currentConn)
-	c.addrIndex = randv2.IntN(len(c.serverAddrs))
+	c.addrIndex = randv2.IntN(len(c.serverAddrsPorts))
 }
 
 func (c *ObfsUDPHopClientPacketConn) ReadFrom(b []byte) (int, net.Addr, error) {
@@ -223,7 +222,11 @@ func (c *ObfsUDPHopClientPacketConn) WriteTo(b []byte, addr net.Addr) (int, erro
 		}
 	*/
 	// Skip the check for now, always write to the server
-	return c.currentConn.WriteTo(b, c.serverAddrs[c.addrIndex])
+	serverAddrs := &net.UDPAddr{
+		IP:   c.serverAddrsIp,
+		Port: int(c.serverAddrsPorts[c.addrIndex]),
+	}
+	return c.currentConn.WriteTo(b, serverAddrs)
 }
 
 func (c *ObfsUDPHopClientPacketConn) Close() error {
@@ -241,7 +244,7 @@ func (c *ObfsUDPHopClientPacketConn) Close() error {
 	err := c.currentConn.Close()
 	close(c.closeChan)
 	c.closed = true
-	c.serverAddrs = nil // For GC
+	c.serverAddrsPorts = nil // For GC
 	return err
 }
 
