@@ -74,18 +74,15 @@ func NewObfsUDPHopClientPacketConn(server string, serverPorts string, hopInterva
 	if err != nil {
 		return nil, err
 	}
-	serverAddrsPorts := make([]uint16, len(ports))
-	for i, port := range ports {
-		serverAddrsPorts[i] = port
-	}
+
 	hopAddr := udpHopAddr(server)
 	conn := &ObfsUDPHopClientPacketConn{
 		serverAddr:       &hopAddr,
 		serverAddrsIp:    net.ParseIP(ip),
-		serverAddrsPorts: serverAddrsPorts,
+		serverAddrsPorts: ports,
 		hopInterval:      hopInterval,
 		obfs:             obfs,
-		addrIndex:        randv2.IntN(len(serverAddrsPorts)),
+		addrIndex:        randv2.IntN(len(ports)),
 		recvQueue:        make(chan *udpPacket, packetQueueSize),
 		closeChan:        make(chan struct{}),
 		bufPool: sync.Pool{
