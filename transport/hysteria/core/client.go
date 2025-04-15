@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -31,7 +32,7 @@ type CongestionFactory func(refBPS uint64) congestion.CongestionControl
 type Client struct {
 	transport         *transport.ClientTransport
 	serverAddr        string
-	serverPorts       string
+	serverPorts       []uint16
 	protocol          string
 	sendBPS, recvBPS  uint64
 	auth              []byte
@@ -52,14 +53,58 @@ type Client struct {
 	fastOpen        bool
 }
 
+// parsePorts parses the multi-port server address and returns the host and ports.
+// Supports both comma-separated single ports and dash-separated port ranges.
+// Format: "host:port1,port2-port3,port4"
+func parsePorts(serverPorts string) (ports []uint16, err error) {
+	portStrs := strings.Split(serverPorts, ",")
+	for _, portStr := range portStrs {
+		if strings.Contains(portStr, "-") {
+			// Port range
+			portRange := strings.Split(portStr, "-")
+			if len(portRange) != 2 {
+				return nil, net.InvalidAddrError("invalid port range")
+			}
+			start, err := strconv.ParseUint(portRange[0], 10, 16)
+			if err != nil {
+				return nil, net.InvalidAddrError("invalid port range")
+			}
+			end, err := strconv.ParseUint(portRange[1], 10, 16)
+			if err != nil {
+				return nil, net.InvalidAddrError("invalid port range")
+			}
+			if start > end {
+				start, end = end, start
+			}
+			for i := start; i <= end; i++ {
+				ports = append(ports, uint16(i))
+			}
+		} else {
+			// Single port
+			port, err := strconv.ParseUint(portStr, 10, 16)
+			if err != nil {
+				return nil, net.InvalidAddrError("invalid port")
+			}
+			ports = append(ports, uint16(port))
+		}
+	}
+
+	return ports, nil
+}
+
 func NewClient(serverAddr string, serverPorts string, protocol string, auth []byte, tlsConfig *tls.Config, quicConfig *quic.Config,
 	transport *transport.ClientTransport, sendBPS uint64, recvBPS uint64, congestionFactory CongestionFactory,
 	obfuscator obfs.Obfuscator, hopInterval time.Duration, fastOpen bool) (*Client, error) {
+	ports, err := parsePorts(serverPorts)
+	if err != nil {
+		return nil, err
+	}
+
 	quicConfig.DisablePathMTUDiscovery = quicConfig.DisablePathMTUDiscovery || pmtud_fix.DisablePathMTUDiscovery
 	c := &Client{
 		transport:         transport,
 		serverAddr:        serverAddr,
-		serverPorts:       serverPorts,
+		serverPorts:       ports,
 		protocol:          protocol,
 		sendBPS:           sendBPS,
 		recvBPS:           recvBPS,

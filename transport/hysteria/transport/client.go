@@ -17,7 +17,7 @@ import (
 
 type ClientTransport struct{}
 
-func (ct *ClientTransport) quicPacketConn(proto string, rAddr net.Addr, serverPorts string, obfs obfsPkg.Obfuscator, hopInterval time.Duration, dialer utils.PacketDialer) (net.PacketConn, error) {
+func (ct *ClientTransport) quicPacketConn(proto string, rAddr net.Addr, serverPorts []uint16, obfs obfsPkg.Obfuscator, hopInterval time.Duration, dialer utils.PacketDialer) (net.PacketConn, error) {
 	server := rAddr.String()
 	if len(proto) == 0 || proto == "udp" {
 		conn, err := dialer.ListenPacket(rAddr)
@@ -25,13 +25,13 @@ func (ct *ClientTransport) quicPacketConn(proto string, rAddr net.Addr, serverPo
 			return nil, err
 		}
 		if obfs != nil {
-			if serverPorts != "" {
+			if len(serverPorts) != 0 {
 				return udp.NewObfsUDPHopClientPacketConn(server, serverPorts, hopInterval, obfs, dialer)
 			}
 			oc := udp.NewObfsUDPConn(conn, obfs)
 			return oc, nil
 		} else {
-			if serverPorts != "" {
+			if len(serverPorts) != 0 {
 				return udp.NewObfsUDPHopClientPacketConn(server, serverPorts, hopInterval, nil, dialer)
 			}
 			return conn, nil
@@ -62,7 +62,7 @@ func (ct *ClientTransport) quicPacketConn(proto string, rAddr net.Addr, serverPo
 	}
 }
 
-func (ct *ClientTransport) QUICDial(proto string, server string, serverPorts string, tlsConfig *tls.Config, quicConfig *quic.Config, obfs obfsPkg.Obfuscator, hopInterval time.Duration, dialer utils.PacketDialer) (quic.Connection, error) {
+func (ct *ClientTransport) QUICDial(proto string, server string, serverPorts []uint16, tlsConfig *tls.Config, quicConfig *quic.Config, obfs obfsPkg.Obfuscator, hopInterval time.Duration, dialer utils.PacketDialer) (quic.Connection, error) {
 	serverUDPAddr, err := dialer.RemoteAddr(server)
 	if err != nil {
 		return nil, err

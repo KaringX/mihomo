@@ -3,8 +3,6 @@ package udp
 import (
 	"errors"
 	"net"
-	"strconv"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -60,11 +58,7 @@ type udpPacket struct {
 	addr net.Addr
 }
 
-func NewObfsUDPHopClientPacketConn(server string, serverPorts string, hopInterval time.Duration, obfs obfs.Obfuscator, dialer utils.PacketDialer) (net.PacketConn, error) {
-	ports, err := parsePorts(serverPorts)
-	if err != nil {
-		return nil, err
-	}
+func NewObfsUDPHopClientPacketConn(server string, serverPorts []uint16, hopInterval time.Duration, obfs obfs.Obfuscator, dialer utils.PacketDialer) (net.PacketConn, error) {
 	// Resolve the server IP address, then attach the ports to UDP addresses
 	rAddr, err := dialer.RemoteAddr(server)
 	if err != nil {
@@ -79,10 +73,10 @@ func NewObfsUDPHopClientPacketConn(server string, serverPorts string, hopInterva
 	conn := &ObfsUDPHopClientPacketConn{
 		serverAddr:       &hopAddr,
 		serverAddrsIp:    net.ParseIP(ip),
-		serverAddrsPorts: ports,
+		serverAddrsPorts: serverPorts,
 		hopInterval:      hopInterval,
 		obfs:             obfs,
-		addrIndex:        randv2.IntN(len(ports)),
+		addrIndex:        randv2.IntN(len(serverPorts)),
 		recvQueue:        make(chan *udpPacket, packetQueueSize),
 		closeChan:        make(chan struct{}),
 		bufPool: sync.Pool{
@@ -321,45 +315,4 @@ func (c *ObfsUDPHopClientPacketConnWithSyscall) SyscallConn() (syscall.RawConn, 
 		return nil, errors.New("not supported")
 	}
 	return sc.SyscallConn()
-}
-
-// parsePorts parses the multi-port server address and returns the host and ports.
-// Supports both comma-separated single ports and dash-separated port ranges.
-// Format: "host:port1,port2-port3,port4"
-func parsePorts(serverPorts string) (ports []uint16, err error) {
-	portStrs := strings.Split(serverPorts, ",")
-	for _, portStr := range portStrs {
-		if strings.Contains(portStr, "-") {
-			// Port range
-			portRange := strings.Split(portStr, "-")
-			if len(portRange) != 2 {
-				return nil, net.InvalidAddrError("invalid port range")
-			}
-			start, err := strconv.ParseUint(portRange[0], 10, 16)
-			if err != nil {
-				return nil, net.InvalidAddrError("invalid port range")
-			}
-			end, err := strconv.ParseUint(portRange[1], 10, 16)
-			if err != nil {
-				return nil, net.InvalidAddrError("invalid port range")
-			}
-			if start > end {
-				start, end = end, start
-			}
-			for i := start; i <= end; i++ {
-				ports = append(ports, uint16(i))
-			}
-		} else {
-			// Single port
-			port, err := strconv.ParseUint(portStr, 10, 16)
-			if err != nil {
-				return nil, net.InvalidAddrError("invalid port")
-			}
-			ports = append(ports, uint16(port))
-		}
-	}
-	if len(ports) == 0 {
-		return nil, net.InvalidAddrError("invalid port")
-	}
-	return ports, nil
 }
