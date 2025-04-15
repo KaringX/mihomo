@@ -9,6 +9,7 @@ import (
 	"net/netip"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/metacubex/quic-go"
@@ -137,10 +138,52 @@ func (c *HysteriaOption) Speed() (uint64, uint64, error) {
 	return up, down, nil
 }
 
+// parsePorts parses the multi-port server address and returns the host and ports.
+// Supports both comma-separated single ports and dash-separated port ranges.
+// Format: "host:port1,port2-port3,port4"
+func parsePorts(serverPorts string) (ports []uint16, err error) {
+	portStrs := strings.Split(serverPorts, ",")
+	for _, portStr := range portStrs {
+		if strings.Contains(portStr, "-") {
+			// Port range
+			portRange := strings.Split(portStr, "-")
+			if len(portRange) != 2 {
+				return nil, net.InvalidAddrError("invalid port range")
+			}
+			start, err := strconv.ParseUint(portRange[0], 10, 16)
+			if err != nil {
+				return nil, net.InvalidAddrError("invalid port range")
+			}
+			end, err := strconv.ParseUint(portRange[1], 10, 16)
+			if err != nil {
+				return nil, net.InvalidAddrError("invalid port range")
+			}
+			if start > end {
+				start, end = end, start
+			}
+			for i := start; i <= end; i++ {
+				ports = append(ports, uint16(i))
+			}
+		} else {
+			// Single port
+			port, err := strconv.ParseUint(portStr, 10, 16)
+			if err != nil {
+				return nil, net.InvalidAddrError("invalid port")
+			}
+			ports = append(ports, uint16(port))
+		}
+	}
+
+	return ports, nil
+}
+
 func NewHysteria(option HysteriaOption) (*Hysteria, error) {
 	clientTransport := &transport.ClientTransport{}
 	addr := net.JoinHostPort(option.Server, strconv.Itoa(option.Port))
-	ports := option.Ports
+	ports, err1 := parsePorts(option.Ports)
+	if err1 != nil {
+		return nil, err1
+	}
 
 	serverName := option.Server
 	if option.SNI != "" {
