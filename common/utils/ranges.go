@@ -149,3 +149,19 @@ func (ranges IntRanges[T]) Range(f func(t T) bool) {
 		}
 	}
 }
+
+func (ranges IntRanges[T]) Length() int {
+	if len(ranges) == 0 {
+		return 0
+	}
+	length := 0
+	for _, r := range ranges {
+		for i := r.Start(); i <= r.End() && i >= r.Start(); i++ {
+			length++
+			if i+1 < i { // integer overflow
+				break
+			}
+		}
+	}
+	return length
+}

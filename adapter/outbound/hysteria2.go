@@ -180,19 +180,21 @@ func NewHysteria2(option Hysteria2Option) (*Hysteria2, error) {
 	}
 
 	var ranges utils.IntRanges[uint16]
-	var serverAddressPort []uint16
 	if option.Ports != "" {
 		ranges, err = utils.NewUnsignedRanges[uint16](option.Ports)
 		if err != nil {
 			return nil, err
 		}
-		ranges.Range(func(port uint16) bool {
-			serverAddressPort = append(serverAddressPort, port)
-			return true
-		})
-		if len(serverAddressPort) > 0 {
+
+		if ranges.Length() > 0 {
 			clientOptions.ServerAddress = func(ctx context.Context) (*net.UDPAddr, error) {
+				var serverAddressPort []uint16
+				ranges.Range(func(port uint16) bool {
+					serverAddressPort = append(serverAddressPort, port)
+					return true
+				})
 				port := serverAddressPort[randv2.IntN(len(serverAddressPort))]
+				serverAddressPort = serverAddressPort[:0]
 				serverAddress := net.JoinHostPort(option.Server, strconv.Itoa(int(port)))
 				return resolveUDPAddrWithPrefer(ctx, "udp", serverAddress, C.NewDNSPrefer(option.IPVersion))
 			}
@@ -205,7 +207,7 @@ func NewHysteria2(option Hysteria2Option) (*Hysteria2, error) {
 			clientOptions.HopInterval = time.Duration(option.HopInterval) * time.Second
 		}
 	}
-	if option.Port == 0 && len(serverAddressPort) == 0 {
+	if option.Port == 0 && ranges.Length() == 0 {
 		return nil, errors.New("invalid port")
 	}
 
