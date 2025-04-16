@@ -103,10 +103,11 @@ func NewObfsUDPHopClientPacketConn(server string, serverPorts []uint16, hopInter
 }
 
 func (c *ObfsUDPHopClientPacketConn) recvRoutine(conn net.PacketConn) {
+	buf := c.bufPool.Get().([]byte)
 	for {
-		buf := c.bufPool.Get().([]byte)
 		n, addr, err := conn.ReadFrom(buf)
 		if err != nil {
+			c.bufPool.Put(buf)
 			return
 		}
 		select {
@@ -114,6 +115,7 @@ func (c *ObfsUDPHopClientPacketConn) recvRoutine(conn net.PacketConn) {
 		default:
 			// Drop the packet if the queue is full
 			c.bufPool.Put(buf)
+			buf = c.bufPool.Get().([]byte)
 		}
 	}
 }

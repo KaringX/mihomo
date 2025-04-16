@@ -1,14 +1,15 @@
 package faketcp
 
 import (
-	"github.com/metacubex/mihomo/transport/hysteria/obfs"
 	"net"
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/metacubex/mihomo/transport/hysteria/obfs"
 )
 
-const udpBufferSize = 65535
+const udpBufferSize = 10240
 
 type ObfsFakeTCPConn struct {
 	orig       *TCPConn

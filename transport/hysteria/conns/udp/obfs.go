@@ -1,13 +1,14 @@
 package udp
 
 import (
-	"github.com/metacubex/mihomo/transport/hysteria/obfs"
 	"net"
 	"sync"
 	"time"
+
+	"github.com/metacubex/mihomo/transport/hysteria/obfs"
 )
 
-const udpBufferSize = 65535
+const udpBufferSize = 10240
 
 type ObfsUDPConn struct {
 	orig       net.PacketConn
