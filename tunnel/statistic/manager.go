@@ -2,6 +2,7 @@ package statistic
 
 import (
 	"os"
+	"runtime"
 	"time"
 
 	"github.com/metacubex/mihomo/common/atomic"
@@ -37,6 +38,7 @@ type Manager struct {
 	downloadTotal atomic.Int64
 	process       *process.Process
 	memory        uint64
+	memoryRSS     uint64
 }
 
 func (m *Manager) Join(c Tracker) {
@@ -87,12 +89,13 @@ func (m *Manager) Snapshot(noConnections bool) *Snapshot {
 			return true
 		})
 	}
-
+	m.updateMemory()
 	return &Snapshot{
 		UploadTotal:   m.uploadTotal.Load(),
 		DownloadTotal: m.downloadTotal.Load(),
 		Connections:   connections,
 		Memory:        m.memory,
+		MemoryRSS:     m.memoryRSS,
 	}
 }
 
@@ -101,7 +104,11 @@ func (m *Manager) updateMemory() {
 	if err != nil {
 		return
 	}
-	m.memory = stat.RSS
+	m.memoryRSS = stat.RSS
+
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
+	m.memory = memStats.StackInuse + memStats.HeapInuse + memStats.HeapIdle - memStats.HeapReleased
 }
 
 func (m *Manager) ResetStatistic() {
@@ -127,4 +134,5 @@ type Snapshot struct {
 	UploadTotal   int64          `json:"uploadTotal"`
 	Connections   []*TrackerInfo `json:"connections"`
 	Memory        uint64         `json:"memory"`
+	MemoryRSS     uint64         `json:"memoryrss"`
 }
