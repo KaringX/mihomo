@@ -38,7 +38,6 @@ type Manager struct {
 	downloadTotal atomic.Int64
 	process       *process.Process
 	memory        uint64
-	memoryRSS     uint64
 }
 
 func (m *Manager) Join(c Tracker) {
@@ -95,17 +94,10 @@ func (m *Manager) Snapshot(noConnections bool) *Snapshot {
 		DownloadTotal: m.downloadTotal.Load(),
 		Connections:   connections,
 		Memory:        m.memory,
-		MemoryRSS:     m.memoryRSS,
 	}
 }
 
 func (m *Manager) updateMemory() {
-	stat, err := m.process.MemoryInfo()
-	if err != nil {
-		return
-	}
-	m.memoryRSS = stat.RSS
-
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 	m.memory = memStats.StackInuse + memStats.HeapInuse + memStats.HeapIdle - memStats.HeapReleased
@@ -134,5 +126,4 @@ type Snapshot struct {
 	UploadTotal   int64          `json:"uploadTotal"`
 	Connections   []*TrackerInfo `json:"connections"`
 	Memory        uint64         `json:"memory"`
-	MemoryRSS     uint64         `json:"memoryrss"`
 }
