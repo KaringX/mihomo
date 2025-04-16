@@ -79,12 +79,15 @@ func (m *Manager) Memory() uint64 {
 	return m.memory
 }
 
-func (m *Manager) Snapshot() *Snapshot {
+func (m *Manager) Snapshot(noConnections bool) *Snapshot {
 	var connections []*TrackerInfo
-	m.Range(func(c Tracker) bool {
-		connections = append(connections, c.Info())
-		return true
-	})
+	if !noConnections {
+		m.Range(func(c Tracker) bool {
+			connections = append(connections, c.Info())
+			return true
+		})
+	}
+
 	return &Snapshot{
 		UploadTotal:   m.uploadTotal.Load(),
 		DownloadTotal: m.downloadTotal.Load(),
