@@ -80,9 +80,9 @@ func (m *Manager) Memory() uint64 {
 	return m.memory
 }
 
-func (m *Manager) Snapshot(noConnections bool) *Snapshot {
+func (m *Manager) Snapshot(includeConnections bool) *Snapshot {
 	var connections []*TrackerInfo
-	if !noConnections {
+	if includeConnections {
 		m.Range(func(c Tracker) bool {
 			connections = append(connections, c.Info())
 			return true
