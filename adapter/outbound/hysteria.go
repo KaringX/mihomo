@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -16,7 +15,6 @@ import (
 	"github.com/metacubex/quic-go/congestion"
 	M "github.com/sagernet/sing/common/metadata"
 
-	CN "github.com/metacubex/mihomo/common/net"
 	"github.com/metacubex/mihomo/component/ca"
 	"github.com/metacubex/mihomo/component/dialer"
 	"github.com/metacubex/mihomo/component/proxydialer"
@@ -46,8 +44,6 @@ type Hysteria struct {
 
 	option *HysteriaOption
 	client *core.Client
-
-	closeCh chan struct{} // for test
 }
 
 func (h *Hysteria) DialContext(ctx context.Context, metadata *C.Metadata, opts ...dialer.Option) (C.Conn, error) {
@@ -56,7 +52,7 @@ func (h *Hysteria) DialContext(ctx context.Context, metadata *C.Metadata, opts .
 		return nil, err
 	}
 
-	return NewConn(CN.NewRefConn(tcpConn, h), h), nil
+	return NewConn(tcpConn, h), nil
 }
 
 func (h *Hysteria) ListenPacketContext(ctx context.Context, metadata *C.Metadata, opts ...dialer.Option) (C.PacketConn, error) {
@@ -64,7 +60,7 @@ func (h *Hysteria) ListenPacketContext(ctx context.Context, metadata *C.Metadata
 	if err != nil {
 		return nil, err
 	}
-	return newPacketConn(CN.NewRefPacketConn(&hyPacketConn{udpConn}, h), h), nil
+	return newPacketConn(&hyPacketConn{udpConn}, h), nil
 }
 
 func (h *Hysteria) genHdc(ctx context.Context, opts ...dialer.Option) utils.PacketDialer {
@@ -83,7 +79,7 @@ func (h *Hysteria) genHdc(ctx context.Context, opts ...dialer.Option) utils.Pack
 			return cDialer.ListenPacket(ctx, network, "", rAddrPort)
 		},
 		remoteAddr: func(addr string) (net.Addr, error) {
-			return resolveUDPAddrWithPrefer(ctx, "udp", addr, h.prefer)
+			return resolveUDPAddr(ctx, "udp", addr, h.prefer)
 		},
 	}
 }
@@ -282,18 +278,16 @@ func NewHysteria(option HysteriaOption) (*Hysteria, error) {
 		option: &option,
 		client: client,
 	}
-	runtime.SetFinalizer(outbound, closeHysteria)
 
 	return outbound, nil
 }
 
-func closeHysteria(h *Hysteria) {
+// Close implements C.ProxyAdapter
+func (h *Hysteria) Close() error {
 	if h.client != nil {
-		_ = h.client.Close()
+		return h.client.Close()
 	}
-	if h.closeCh != nil {
-		close(h.closeCh)
-	}
+	return nil
 }
 
 type hyPacketConn struct {
