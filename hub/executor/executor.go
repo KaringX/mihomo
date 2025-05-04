@@ -6,6 +6,7 @@ import (
 	"net/netip"
 	"os"
 	"runtime"
+	"runtime/debug"
 	"strconv"
 	"sync"
 	"time"
@@ -82,7 +83,7 @@ func ParseWithBytes(buf []byte) (*config.Config, error) {
 }
 
 // ApplyConfig dispatch configure to all parts without ExternalController
-func ApplyConfig(cfg *config.Config, force bool) {
+func ApplyConfig(cfg *config.Config, force bool) (err error) {
 	mux.Lock()
 	defer mux.Unlock()
 	log.SetLevel(cfg.General.LogLevel)
@@ -105,8 +106,14 @@ func ApplyConfig(cfg *config.Config, force bool) {
 	updateGeneral(cfg.General, true)
 	updateNTP(cfg.NTP)
 	updateDNS(cfg.DNS, cfg.General.IPv6)
-	updateListeners(cfg.General, cfg.Listeners, force)
-	updateTun(cfg.General) // tun should not care "force"
+	err = updateListeners(cfg.General, cfg.Listeners, force)
+	if err != nil {
+		return err
+	}
+	err = updateTun(cfg.General) // tun should not care "force"
+	if err != nil {
+		return err
+	}
 	updateIPTables(cfg)
 	updateTunnels(cfg.Tunnels)
 
@@ -117,11 +124,13 @@ func ApplyConfig(cfg *config.Config, force bool) {
 	updateProfile(cfg)
 	loadRuleProvider(cfg.RuleProviders)
 	runtime.GC()
+	debug.FreeOSMemory()
 	tunnel.OnRunning()
 	hcCompatibleProvider(cfg.Providers)
 	updateUpdater(cfg)
 
 	resolver.ResetConnection()
+	return nil
 }
 
 func initInnerTcp() {
@@ -186,7 +195,7 @@ func GetGeneral() *config.General {
 	return general
 }
 
-func updateListeners(general *config.General, listeners map[string]C.InboundListener, force bool) {
+func updateListeners(general *config.General, listeners map[string]C.InboundListener, force bool) (err error) {
 	listener.PatchInboundListeners(listeners, tunnel.Tunnel, true)
 	if !force {
 		return
@@ -200,18 +209,40 @@ func updateListeners(general *config.General, listeners map[string]C.InboundList
 
 	bindAddress := general.BindAddress
 	listener.SetBindAddress(bindAddress)
-	listener.ReCreateHTTP(general.Port, tunnel.Tunnel)
-	listener.ReCreateSocks(general.SocksPort, tunnel.Tunnel)
-	listener.ReCreateRedir(general.RedirPort, tunnel.Tunnel)
-	listener.ReCreateTProxy(general.TProxyPort, tunnel.Tunnel)
-	listener.ReCreateMixed(general.MixedPort, tunnel.Tunnel)
-	listener.ReCreateShadowSocks(general.ShadowSocksConfig, tunnel.Tunnel)
-	listener.ReCreateVmess(general.VmessConfig, tunnel.Tunnel)
-	listener.ReCreateTuic(general.TuicServer, tunnel.Tunnel)
+	err = listener.ReCreateHTTP(general.Port, tunnel.Tunnel)
+	if err != nil {
+		return err
+	}
+	err = listener.ReCreateSocks(general.SocksPort, tunnel.Tunnel)
+	if err != nil {
+		return err
+	}
+	err = listener.ReCreateRedir(general.RedirPort, tunnel.Tunnel)
+	if err != nil {
+		return err
+	}
+	err = listener.ReCreateTProxy(general.TProxyPort, tunnel.Tunnel)
+	if err != nil {
+		return err
+	}
+	err = listener.ReCreateMixed(general.MixedPort, tunnel.Tunnel)
+	if err != nil {
+		return err
+	}
+	err = listener.ReCreateShadowSocks(general.ShadowSocksConfig, tunnel.Tunnel)
+	if err != nil {
+		return err
+	}
+	err = listener.ReCreateVmess(general.VmessConfig, tunnel.Tunnel)
+	if err != nil {
+		return err
+	}
+	err = listener.ReCreateTuic(general.TuicServer, tunnel.Tunnel)
+	return err
 }
 
-func updateTun(general *config.General) {
-	listener.ReCreateTun(general.Tun, tunnel.Tunnel)
+func updateTun(general *config.General) (err error) {
+	return listener.ReCreateTun(general.Tun, tunnel.Tunnel)
 }
 
 func updateExperimental(c *config.Experimental) {
@@ -328,6 +359,7 @@ func loadProvider(pv provider.Provider) {
 func loadRuleProvider(ruleProviders map[string]provider.RuleProvider) {
 	wg := sync.WaitGroup{}
 	ch := make(chan struct{}, concurrentCount)
+	log.Infoln("Start initial rule providers")
 	for _, ruleProvider := range ruleProviders {
 		ruleProvider := ruleProvider
 		wg.Add(1)
@@ -340,12 +372,14 @@ func loadRuleProvider(ruleProviders map[string]provider.RuleProvider) {
 	}
 
 	wg.Wait()
+	log.Infoln("initial rule providers done")
 }
 
 func loadProxyProvider(proxyProviders map[string]provider.ProxyProvider) {
 	// limit concurrent size
 	wg := sync.WaitGroup{}
 	ch := make(chan struct{}, concurrentCount)
+	log.Infoln("Start initial proxy providers")
 	for _, proxyProvider := range proxyProviders {
 		proxyProvider := proxyProvider
 		wg.Add(1)
@@ -357,6 +391,7 @@ func loadProxyProvider(proxyProviders map[string]provider.ProxyProvider) {
 	}
 
 	wg.Wait()
+	log.Infoln("initial proxy providers done")
 }
 func hcCompatibleProvider(proxyProviders map[string]provider.ProxyProvider) {
 	// limit concurrent size

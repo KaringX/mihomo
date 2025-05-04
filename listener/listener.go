@@ -103,11 +103,11 @@ func SetBindAddress(host string) {
 	bindAddress = host
 }
 
-func ReCreateHTTP(port int, tunnel C.Tunnel) {
+func ReCreateHTTP(port int, tunnel C.Tunnel) (err error) {
 	httpMux.Lock()
 	defer httpMux.Unlock()
 
-	var err error
+	//var err error
 	defer func() {
 		if err != nil {
 			log.Errorln("Start HTTP server error: %s", err.Error())
@@ -135,13 +135,14 @@ func ReCreateHTTP(port int, tunnel C.Tunnel) {
 	}
 
 	log.Infoln("HTTP proxy listening at: %s", httpListener.Address())
+	return err
 }
 
-func ReCreateSocks(port int, tunnel C.Tunnel) {
+func ReCreateSocks(port int, tunnel C.Tunnel) (err error) {
 	socksMux.Lock()
 	defer socksMux.Unlock()
 
-	var err error
+	//var err error
 	defer func() {
 		if err != nil {
 			log.Errorln("Start SOCKS server error: %s", err.Error())
@@ -179,13 +180,15 @@ func ReCreateSocks(port int, tunnel C.Tunnel) {
 		return
 	}
 
-	tcpListener, err := socks.New(addr, tunnel)
-	if err != nil {
+	tcpListener, err1 := socks.New(addr, tunnel)
+	if err1 != nil {
+		err = err1
 		return
 	}
 
-	udpListener, err := socks.NewUDP(addr, tunnel)
-	if err != nil {
+	udpListener, err1 := socks.NewUDP(addr, tunnel)
+	if err1 != nil {
+		err = err1
 		tcpListener.Close()
 		return
 	}
@@ -194,13 +197,14 @@ func ReCreateSocks(port int, tunnel C.Tunnel) {
 	socksUDPListener = udpListener
 
 	log.Infoln("SOCKS proxy listening at: %s", socksListener.Address())
+	return
 }
 
-func ReCreateRedir(port int, tunnel C.Tunnel) {
+func ReCreateRedir(port int, tunnel C.Tunnel) (err error) {
 	redirMux.Lock()
 	defer redirMux.Unlock()
 
-	var err error
+	//var err error
 	defer func() {
 		if err != nil {
 			log.Errorln("Start Redir server error: %s", err.Error())
@@ -240,13 +244,14 @@ func ReCreateRedir(port int, tunnel C.Tunnel) {
 	}
 
 	log.Infoln("Redirect proxy listening at: %s", redirListener.Address())
+	return
 }
 
-func ReCreateShadowSocks(shadowSocksConfig string, tunnel C.Tunnel) {
+func ReCreateShadowSocks(shadowSocksConfig string, tunnel C.Tunnel) (err error) {
 	ssMux.Lock()
 	defer ssMux.Unlock()
 
-	var err error
+	//var err error
 	defer func() {
 		if err != nil {
 			log.Errorln("Start ShadowSocks server error: %s", err.Error())
@@ -283,8 +288,9 @@ func ReCreateShadowSocks(shadowSocksConfig string, tunnel C.Tunnel) {
 		return
 	}
 
-	listener, err := sing_shadowsocks.New(ssConfig, tunnel)
-	if err != nil {
+	listener, err1 := sing_shadowsocks.New(ssConfig, tunnel)
+	if err1 != nil {
+		err = err1
 		return
 	}
 
@@ -293,14 +299,14 @@ func ReCreateShadowSocks(shadowSocksConfig string, tunnel C.Tunnel) {
 	for _, addr := range shadowSocksListener.AddrList() {
 		log.Infoln("ShadowSocks proxy listening at: %s", addr.String())
 	}
-	return
+	return err
 }
 
-func ReCreateVmess(vmessConfig string, tunnel C.Tunnel) {
+func ReCreateVmess(vmessConfig string, tunnel C.Tunnel) (err error) {
 	vmessMux.Lock()
 	defer vmessMux.Unlock()
 
-	var err error
+	//var err error
 	defer func() {
 		if err != nil {
 			log.Errorln("Start Vmess server error: %s", err.Error())
@@ -335,8 +341,9 @@ func ReCreateVmess(vmessConfig string, tunnel C.Tunnel) {
 		return
 	}
 
-	listener, err := sing_vmess.New(vsConfig, tunnel)
-	if err != nil {
+	listener, err1 := sing_vmess.New(vsConfig, tunnel)
+	if err1 != nil {
+		err = err1
 		return
 	}
 
@@ -345,10 +352,10 @@ func ReCreateVmess(vmessConfig string, tunnel C.Tunnel) {
 	for _, addr := range vmessListener.AddrList() {
 		log.Infoln("Vmess proxy listening at: %s", addr.String())
 	}
-	return
+	return err
 }
 
-func ReCreateTuic(config LC.TuicServer, tunnel C.Tunnel) {
+func ReCreateTuic(config LC.TuicServer, tunnel C.Tunnel) (err error) {
 	tuicMux.Lock()
 	defer func() {
 		LastTuicConf = config
@@ -356,7 +363,7 @@ func ReCreateTuic(config LC.TuicServer, tunnel C.Tunnel) {
 	}()
 	shouldIgnore := false
 
-	var err error
+	//var err error
 	defer func() {
 		if err != nil {
 			log.Errorln("Start Tuic server error: %s", err.Error())
@@ -380,8 +387,9 @@ func ReCreateTuic(config LC.TuicServer, tunnel C.Tunnel) {
 		return
 	}
 
-	listener, err := tuic.New(config, tunnel)
-	if err != nil {
+	listener, err1 := tuic.New(config, tunnel)
+	if err1 != nil {
+		err = err1
 		return
 	}
 
@@ -390,14 +398,14 @@ func ReCreateTuic(config LC.TuicServer, tunnel C.Tunnel) {
 	for _, addr := range tuicListener.AddrList() {
 		log.Infoln("Tuic proxy listening at: %s", addr.String())
 	}
-	return
+	return err
 }
 
-func ReCreateTProxy(port int, tunnel C.Tunnel) {
+func ReCreateTProxy(port int, tunnel C.Tunnel) (err error) {
 	tproxyMux.Lock()
 	defer tproxyMux.Unlock()
 
-	var err error
+	//var err error
 	defer func() {
 		if err != nil {
 			log.Errorln("Start TProxy server error: %s", err.Error())
@@ -437,13 +445,14 @@ func ReCreateTProxy(port int, tunnel C.Tunnel) {
 	}
 
 	log.Infoln("TProxy server listening at: %s", tproxyListener.Address())
+	return err
 }
 
-func ReCreateMixed(port int, tunnel C.Tunnel) {
+func ReCreateMixed(port int, tunnel C.Tunnel) (err error) {
 	mixedMux.Lock()
 	defer mixedMux.Unlock()
 
-	var err error
+	//var err error
 	defer func() {
 		if err != nil {
 			log.Errorln("Start Mixed(http+socks) server error: %s", err.Error())
@@ -492,9 +501,10 @@ func ReCreateMixed(port int, tunnel C.Tunnel) {
 	}
 
 	log.Infoln("Mixed(http+socks) proxy listening at: %s", mixedListener.Address())
+	return err
 }
 
-func ReCreateTun(tunConf LC.Tun, tunnel C.Tunnel) {
+func ReCreateTun(tunConf LC.Tun, tunnel C.Tunnel) (err error) {
 	tunConf.Sort()
 
 	tunMux.Lock()
@@ -503,7 +513,7 @@ func ReCreateTun(tunConf LC.Tun, tunnel C.Tunnel) {
 		tunMux.Unlock()
 	}()
 
-	var err error
+	//var err error
 	defer func() {
 		if err != nil {
 			log.Errorln("Start TUN listening error: %s", err.Error())
@@ -524,13 +534,15 @@ func ReCreateTun(tunConf LC.Tun, tunnel C.Tunnel) {
 		return
 	}
 
-	lister, err := sing_tun.New(tunConf, tunnel)
-	if err != nil {
-		return
+	lister, err1 := sing_tun.New(tunConf, tunnel)
+	if err1 != nil {
+		err = err1
+		return err
 	}
 	tunLister = lister
 
 	log.Infoln("[TUN] Tun adapter listening at: %s", tunLister.Address())
+	return err
 }
 
 func PatchTunnel(tunnels []LC.Tunnel, tunnel C.Tunnel) {

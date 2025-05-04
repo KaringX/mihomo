@@ -31,6 +31,7 @@ func ReCreateNTPService(server string, interval time.Duration, dialerProxy strin
 	if service != nil {
 		service.Stop()
 	}
+	log.Infoln("Start initial ntp")
 	ctx, cancel := context.WithCancel(context.Background())
 	service = &Service{
 		server:         M.ParseSocksaddr(server),
@@ -41,6 +42,7 @@ func ReCreateNTPService(server string, interval time.Duration, dialerProxy strin
 		syncSystemTime: syncSystemTime,
 	}
 	service.Start()
+	log.Infoln("initial ntp done")
 }
 
 func (srv *Service) Start() {
