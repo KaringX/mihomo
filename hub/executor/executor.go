@@ -217,28 +217,16 @@ func updateListeners(general *config.General, listeners map[string]C.InboundList
 	if err != nil {
 		return err
 	}
-	err = listener.ReCreateRedir(general.RedirPort, tunnel.Tunnel)
-	if err != nil {
-		return err
-	}
-	err = listener.ReCreateTProxy(general.TProxyPort, tunnel.Tunnel)
-	if err != nil {
-		return err
-	}
+	listener.ReCreateRedir(general.RedirPort, tunnel.Tunnel)
+	listener.ReCreateTProxy(general.TProxyPort, tunnel.Tunnel)
 	err = listener.ReCreateMixed(general.MixedPort, tunnel.Tunnel)
 	if err != nil {
 		return err
 	}
-	err = listener.ReCreateShadowSocks(general.ShadowSocksConfig, tunnel.Tunnel)
-	if err != nil {
-		return err
-	}
-	err = listener.ReCreateVmess(general.VmessConfig, tunnel.Tunnel)
-	if err != nil {
-		return err
-	}
-	err = listener.ReCreateTuic(general.TuicServer, tunnel.Tunnel)
-	return err
+	listener.ReCreateShadowSocks(general.ShadowSocksConfig, tunnel.Tunnel)
+	listener.ReCreateVmess(general.VmessConfig, tunnel.Tunnel)
+	listener.ReCreateTuic(general.TuicServer, tunnel.Tunnel)
+	return nil
 }
 
 func updateTun(general *config.General) (err error) {
