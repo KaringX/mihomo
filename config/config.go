@@ -1789,6 +1789,7 @@ func parseDomain(domains []string, domainTrie *trie.DomainTrie[struct{}], adapte
 				if err != nil {
 					return nil, err
 				}
+				matcher, err := parseDomainRuleSet(rulsetName, adapterName, ruleProviders)
 				if err != nil {
 					return nil, err
 				}
