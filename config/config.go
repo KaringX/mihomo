@@ -31,8 +31,8 @@ import (
 	L "github.com/metacubex/mihomo/listener"
 	LC "github.com/metacubex/mihomo/listener/config"
 	"github.com/metacubex/mihomo/log"
+	"github.com/metacubex/mihomo/rules"
 	R "github.com/metacubex/mihomo/rules"
-	RC "github.com/metacubex/mihomo/rules/common"
 	RP "github.com/metacubex/mihomo/rules/provider"
 	T "github.com/metacubex/mihomo/tunnel"
 
@@ -1339,7 +1339,12 @@ func parseNameServerPolicy(nsPolicy *orderedmap.OrderedMap[string, any], rulePro
 			policy[idx] = dns.Policy{Matcher: matcher, NameServers: nameservers}
 		} else if strings.HasPrefix(domain, "geosite:") {
 			country := domain[8:]
-			matcher, err := RC.NewGEOSITE(country, "dns.nameserver-policy")
+			//matcher, err := RC.NewGEOSITE(country, "dns.nameserver-policy")
+			rulsetName, err := rules.AddRuleSetGeosite(country, ruleProviders)
+			if err != nil {
+				return nil, err
+			}
+			matcher, err := parseDomainRuleSet(rulsetName, "dns.nameserver-policy", ruleProviders)
 			if err != nil {
 				return nil, err
 			}
@@ -1457,11 +1462,20 @@ func parseDNS(rawCfg *RawConfig, hosts *trie.DomainTrie[resolver.HostValue], rul
 
 	if len(cfg.Fallback) != 0 {
 		if cfg.FallbackFilter.GeoIP {
-			matcher, err := RC.NewGEOIP(cfg.FallbackFilter.GeoIPCode, "dns.fallback-filter.geoip", false, true)
+			/*matcher, err := RC.NewGEOIP(cfg.FallbackFilter.GeoIPCode, "dns.fallback-filter.geoip", false, true)
 			if err != nil {
 				return nil, fmt.Errorf("load GeoIP dns fallback filter error, %w", err)
 			}
-			dnsCfg.FallbackIPFilter = append(dnsCfg.FallbackIPFilter, matcher.DnsFallbackFilter())
+			dnsCfg.FallbackIPFilter = append(dnsCfg.FallbackIPFilter, matcher.DnsFallbackFilter())*/
+			rulesetName, err := rules.AddRuleSetGeoip(cfg.FallbackFilter.GeoIPCode, ruleProviders)
+			if err != nil {
+				return nil, err
+			}
+			matcher, err := parseIPRuleSet(rulesetName, "dns.fallback-filter.geoip[rule-set]", ruleProviders)
+			if err != nil {
+				return nil, fmt.Errorf("DNS FallbackRuleset:geoip format error: %w", err)
+			}
+			dnsCfg.FallbackIPFilter = append(dnsCfg.FallbackIPFilter, matcher)
 		}
 		if len(cfg.FallbackFilter.IPCIDR) > 0 {
 			cidrSet := cidr.NewIpCidrSet()
@@ -1491,12 +1505,28 @@ func parseDNS(rawCfg *RawConfig, hosts *trie.DomainTrie[resolver.HostValue], rul
 		}
 		if len(cfg.FallbackFilter.GeoSite) > 0 {
 			log.Warnln("replace fallback-filter.geosite with nameserver-policy, it will be removed in the future")
-			for idx, geoSite := range cfg.FallbackFilter.GeoSite {
+			/*for idx, geoSite := range cfg.FallbackFilter.GeoSite {
 				matcher, err := RC.NewGEOSITE(geoSite, "dns.fallback-filter.geosite")
 				if err != nil {
 					return nil, fmt.Errorf("DNS FallbackGeosite[%d] format error: %w", idx, err)
 				}
 				dnsCfg.FallbackDomainFilter = append(dnsCfg.FallbackDomainFilter, matcher)
+			}*/
+			for idx, ruleSet := range cfg.FallbackFilter.GeoSite {
+				subkeys := strings.Split(ruleSet, ":")
+				subkeys = subkeys[1:]
+				subkeys = strings.Split(subkeys[0], ",")
+				for _, domainSetName := range subkeys {
+					rulsetName, err := rules.AddRuleSetGeosite(domainSetName, ruleProviders)
+					if err != nil {
+						return nil, err
+					}
+					matcher, err := parseDomainRuleSet(rulsetName, "dns.fallback-filter.geosite[rule-set]", ruleProviders)
+					if err != nil {
+						return nil, fmt.Errorf("DNS FallbackRuleset:geosite[%d] format error: %w", idx, err)
+					}
+					dnsCfg.FallbackDomainFilter = append(dnsCfg.FallbackDomainFilter, matcher)
+				}
 			}
 		}
 	}
@@ -1701,7 +1731,13 @@ func parseIPCIDR(addresses []string, cidrSet *cidr.IpCidrSet, adapterName string
 			subkeys = subkeys[1:]
 			subkeys = strings.Split(subkeys[0], ",")
 			for _, country := range subkeys {
-				matcher, err = RC.NewGEOIP(country, adapterName, false, false)
+				//matcher, err = RC.NewGEOIP(country, adapterName, false, false)
+				var rulesetName string
+				rulesetName, err = rules.AddRuleSetGeoip(country, ruleProviders)
+				if err != nil {
+					return nil, err
+				}
+				matcher, err := parseIPRuleSet(rulesetName, adapterName, ruleProviders)
 				if err != nil {
 					return nil, err
 				}
@@ -1748,7 +1784,11 @@ func parseDomain(domains []string, domainTrie *trie.DomainTrie[struct{}], adapte
 			subkeys = subkeys[1:]
 			subkeys = strings.Split(subkeys[0], ",")
 			for _, country := range subkeys {
-				matcher, err = RC.NewGEOSITE(country, adapterName)
+				//matcher, err = RC.NewGEOSITE(country, adapterName)
+				rulsetName, err := rules.AddRuleSetGeosite(country, ruleProviders)
+				if err != nil {
+					return nil, err
+				}
 				if err != nil {
 					return nil, err
 				}

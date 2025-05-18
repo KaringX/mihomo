@@ -8,7 +8,6 @@ import (
 	"github.com/metacubex/mihomo/adapter/inbound"
 	"github.com/metacubex/mihomo/component/dialer"
 	"github.com/metacubex/mihomo/component/resolver"
-	"github.com/metacubex/mihomo/component/updater"
 	"github.com/metacubex/mihomo/config"
 	C "github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/hub/executor"
@@ -393,7 +392,9 @@ func updateConfigs(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateGeoDatabases(w http.ResponseWriter, r *http.Request) {
-	err := updater.UpdateGeoDatabases()
+	render.Status(r, http.StatusInternalServerError)
+	render.JSON(w, r, newError("Not Support"))
+	/*err := updater.UpdateGeoDatabases()
 	if err != nil {
 		log.Errorln("[GEO] update GEO databases failed: %v", err)
 		render.Status(r, http.StatusInternalServerError)
@@ -401,5 +402,5 @@ func updateGeoDatabases(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.NoContent(w, r)
+	render.NoContent(w, r)*/
 }
