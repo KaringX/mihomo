@@ -70,6 +70,7 @@ func NewRuleSetAsnName(name string) string {
 }
 
 func AddRuleSetGeosite(rulesetName string, ruleProviders map[string]providerTypes.RuleProvider) (string, error) {
+	rulesetName = strings.ToLower(rulesetName)
 	fileUrl := fmt.Sprintf("%s/%s.mrs", GetGeositeRuleSetUrl(), rulesetName)
 	rulesetNameNew := NewRuleSetGeositeName(rulesetName)
 	if _, ok := ruleProviders[rulesetNameNew]; !ok {
@@ -94,6 +95,7 @@ func AddRuleSetGeosite(rulesetName string, ruleProviders map[string]providerType
 }
 
 func AddRuleSetGeosite2(rulesetName string, ruleProviders map[string]map[string]any) {
+	rulesetName = strings.ToLower(rulesetName)
 	fileUrl := fmt.Sprintf("%s/%s.mrs", GetGeositeRuleSetUrl(), rulesetName)
 	rulesetNameNew := NewRuleSetGeositeName(rulesetName)
 	if _, ok := ruleProviders[rulesetNameNew]; !ok {
@@ -112,6 +114,7 @@ func AddRuleSetGeosite2(rulesetName string, ruleProviders map[string]map[string]
 }
 
 func AddRuleSetGeoip(rulesetName string, ruleProviders map[string]providerTypes.RuleProvider) (string, error) {
+	rulesetName = strings.ToLower(rulesetName)
 	fileUrl := fmt.Sprintf("%s/%s.mrs", GetGeoipRuleSetUrl(), rulesetName)
 	rulesetNameNew := NewRuleSetGeoipName(rulesetName)
 	if _, ok := ruleProviders[rulesetNameNew]; !ok {
@@ -137,9 +140,10 @@ func AddRuleSetGeoip(rulesetName string, ruleProviders map[string]providerTypes.
 }
 
 func AddRuleSetGeoip2(rulesetName string, ruleProviders map[string]map[string]any) {
+	rulesetName = strings.ToLower(rulesetName)
 	fileUrl := fmt.Sprintf("%s/%s.mrs", GetGeoipRuleSetUrl(), rulesetName)
 	rulesetNameNew := NewRuleSetGeoipName(rulesetName)
-	if _, ok := ruleProviders[rulesetName]; !ok {
+	if _, ok := ruleProviders[rulesetNameNew]; !ok {
 		filePath := fmt.Sprintf("./ruleset/%s.mrs", rulesetNameNew)
 		mapping := make(map[string]any)
 		mapping["origin_ruleset"] = rulesetName
@@ -155,6 +159,7 @@ func AddRuleSetGeoip2(rulesetName string, ruleProviders map[string]map[string]an
 }
 
 func AddRuleSetAsn2(rulesetName string, ruleProviders map[string]map[string]any) {
+	rulesetName = strings.ToLower(rulesetName)
 	fileUrl := fmt.Sprintf("%s/%s.mrs", GetAsnRuleSetUrl(), rulesetName)
 	rulesetNameNew := NewRuleSetAsnName(rulesetName)
 	if _, ok := ruleProviders[rulesetNameNew]; !ok {
