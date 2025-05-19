@@ -71,11 +71,11 @@ func NewRuleSetAsnName(name string) string {
 
 func AddRuleSetGeosite(rulesetName string, ruleProviders map[string]providerTypes.RuleProvider) (string, error) {
 	fileUrl := fmt.Sprintf("%s/%s.mrs", GetGeositeRuleSetUrl(), rulesetName)
-	rulesetName = NewRuleSetGeositeName(rulesetName)
-	if _, ok := ruleProviders[rulesetName]; !ok {
-		filePath := fmt.Sprintf("./ruleset/%s.mrs", rulesetName)
+	rulesetNameNew := NewRuleSetGeositeName(rulesetName)
+	if _, ok := ruleProviders[rulesetNameNew]; !ok {
+		filePath := fmt.Sprintf("./ruleset/%s.mrs", rulesetNameNew)
 		mapping := make(map[string]any)
-		mapping["geo"] = true
+		mapping["origin_ruleset"] = rulesetName
 		mapping["type"] = "http"
 		mapping["behavior"] = "domain"
 		mapping["format"] = "mrs"
@@ -83,23 +83,23 @@ func AddRuleSetGeosite(rulesetName string, ruleProviders map[string]providerType
 		mapping["url"] = fileUrl
 		mapping["interval"] = updateInterval
 		mapping["proxy"] = GetDownloadProxy()
-		rp, err := RP.ParseRuleProvider(rulesetName, mapping, ParseRule)
+		rp, err := RP.ParseRuleProvider(rulesetNameNew, mapping, ParseRule)
 		if err != nil {
 			return "", err
 		}
 
-		ruleProviders[rulesetName] = rp
+		ruleProviders[rulesetNameNew] = rp
 	}
-	return rulesetName, nil
+	return rulesetNameNew, nil
 }
 
 func AddRuleSetGeosite2(rulesetName string, ruleProviders map[string]map[string]any) {
 	fileUrl := fmt.Sprintf("%s/%s.mrs", GetGeositeRuleSetUrl(), rulesetName)
-	rulesetName = NewRuleSetGeositeName(rulesetName)
-	if _, ok := ruleProviders[rulesetName]; !ok {
-		filePath := fmt.Sprintf("./ruleset/%s.mrs", rulesetName)
+	rulesetNameNew := NewRuleSetGeositeName(rulesetName)
+	if _, ok := ruleProviders[rulesetNameNew]; !ok {
+		filePath := fmt.Sprintf("./ruleset/%s.mrs", rulesetNameNew)
 		mapping := make(map[string]any)
-		mapping["geo"] = true
+		mapping["origin_ruleset"] = rulesetName
 		mapping["type"] = "http"
 		mapping["behavior"] = "domain"
 		mapping["format"] = "mrs"
@@ -107,18 +107,17 @@ func AddRuleSetGeosite2(rulesetName string, ruleProviders map[string]map[string]
 		mapping["url"] = fileUrl
 		mapping["interval"] = GetUpdateInterval()
 		mapping["proxy"] = GetDownloadProxy()
-		ruleProviders[rulesetName] = mapping
+		ruleProviders[rulesetNameNew] = mapping
 	}
 }
 
 func AddRuleSetGeoip(rulesetName string, ruleProviders map[string]providerTypes.RuleProvider) (string, error) {
 	fileUrl := fmt.Sprintf("%s/%s.mrs", GetGeoipRuleSetUrl(), rulesetName)
-	rulesetName = NewRuleSetGeoipName(rulesetName)
-	if _, ok := ruleProviders[rulesetName]; !ok {
-		filePath := fmt.Sprintf("./ruleset/%s.mrs", rulesetName)
-
+	rulesetNameNew := NewRuleSetGeoipName(rulesetName)
+	if _, ok := ruleProviders[rulesetNameNew]; !ok {
+		filePath := fmt.Sprintf("./ruleset/%s.mrs", rulesetNameNew)
 		mapping := make(map[string]any)
-		mapping["geo"] = true
+		mapping["origin_ruleset"] = rulesetName
 		mapping["type"] = "http"
 		mapping["behavior"] = "ipcidr"
 		mapping["format"] = "mrs"
@@ -126,24 +125,24 @@ func AddRuleSetGeoip(rulesetName string, ruleProviders map[string]providerTypes.
 		mapping["url"] = fileUrl
 		mapping["interval"] = updateInterval
 		mapping["proxy"] = GetDownloadProxy()
-		rp, err := RP.ParseRuleProvider(rulesetName, mapping, ParseRule)
+		rp, err := RP.ParseRuleProvider(rulesetNameNew, mapping, ParseRule)
 		if err != nil {
 			return "", err
 		}
 
-		ruleProviders[rulesetName] = rp
+		ruleProviders[rulesetNameNew] = rp
 
 	}
-	return rulesetName, nil
+	return rulesetNameNew, nil
 }
 
 func AddRuleSetGeoip2(rulesetName string, ruleProviders map[string]map[string]any) {
 	fileUrl := fmt.Sprintf("%s/%s.mrs", GetGeoipRuleSetUrl(), rulesetName)
-	rulesetName = NewRuleSetGeoipName(rulesetName)
+	rulesetNameNew := NewRuleSetGeoipName(rulesetName)
 	if _, ok := ruleProviders[rulesetName]; !ok {
-		filePath := fmt.Sprintf("./ruleset/%s.mrs", rulesetName)
+		filePath := fmt.Sprintf("./ruleset/%s.mrs", rulesetNameNew)
 		mapping := make(map[string]any)
-		mapping["geo"] = true
+		mapping["origin_ruleset"] = rulesetName
 		mapping["type"] = "http"
 		mapping["behavior"] = "ipcidr"
 		mapping["format"] = "mrs"
@@ -151,17 +150,17 @@ func AddRuleSetGeoip2(rulesetName string, ruleProviders map[string]map[string]an
 		mapping["url"] = fileUrl
 		mapping["interval"] = GetUpdateInterval()
 		mapping["proxy"] = GetDownloadProxy()
-		ruleProviders[rulesetName] = mapping
+		ruleProviders[rulesetNameNew] = mapping
 	}
 }
 
 func AddRuleSetAsn2(rulesetName string, ruleProviders map[string]map[string]any) {
 	fileUrl := fmt.Sprintf("%s/%s.mrs", GetAsnRuleSetUrl(), rulesetName)
-	rulesetName = NewRuleSetAsnName(rulesetName)
-	if _, ok := ruleProviders[rulesetName]; !ok {
-		filePath := fmt.Sprintf("./ruleset/%s.mrs", rulesetName)
+	rulesetNameNew := NewRuleSetAsnName(rulesetName)
+	if _, ok := ruleProviders[rulesetNameNew]; !ok {
+		filePath := fmt.Sprintf("./ruleset/%s.mrs", rulesetNameNew)
 		mapping := make(map[string]any)
-		mapping["geo"] = true
+		mapping["origin_ruleset"] = rulesetName
 		mapping["type"] = "http"
 		mapping["behavior"] = "ipcidr"
 		mapping["format"] = "mrs"
@@ -169,6 +168,6 @@ func AddRuleSetAsn2(rulesetName string, ruleProviders map[string]map[string]any)
 		mapping["url"] = fileUrl
 		mapping["interval"] = GetUpdateInterval()
 		mapping["proxy"] = GetDownloadProxy()
-		ruleProviders[rulesetName] = mapping
+		ruleProviders[rulesetNameNew] = mapping
 	}
 }
