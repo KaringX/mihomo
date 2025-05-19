@@ -70,6 +70,9 @@ func NewRuleSetAsnName(name string) string {
 }
 
 func AddRuleSetGeosite(rulesetName string, ruleProviders map[string]providerTypes.RuleProvider) (string, error) {
+	if len(rulesetName) == 0 {
+		return "", fmt.Errorf("rulesetName is empty")
+	}
 	rulesetName = strings.ToLower(rulesetName)
 	rulesetNameNew := NewRuleSetGeositeName(rulesetName)
 	if _, ok := ruleProviders[rulesetNameNew]; !ok {
@@ -94,6 +97,9 @@ func AddRuleSetGeosite(rulesetName string, ruleProviders map[string]providerType
 }
 
 func AddRuleSetGeosite2(rulesetName string, ruleProviders map[string]map[string]any) {
+	if len(rulesetName) == 0 {
+		return
+	}
 	rulesetName = strings.ToLower(rulesetName)
 	rulesetNameNew := NewRuleSetGeositeName(rulesetName)
 	if _, ok := ruleProviders[rulesetNameNew]; !ok {
@@ -112,6 +118,9 @@ func AddRuleSetGeosite2(rulesetName string, ruleProviders map[string]map[string]
 }
 
 func AddRuleSetGeoip(rulesetName string, ruleProviders map[string]providerTypes.RuleProvider) (string, error) {
+	if len(rulesetName) == 0 {
+		return "", fmt.Errorf("rulesetName is empty")
+	}
 	rulesetName = strings.ToLower(rulesetName)
 	rulesetNameNew := NewRuleSetGeoipName(rulesetName)
 	if _, ok := ruleProviders[rulesetNameNew]; !ok {
@@ -137,6 +146,9 @@ func AddRuleSetGeoip(rulesetName string, ruleProviders map[string]providerTypes.
 }
 
 func AddRuleSetGeoip2(rulesetName string, ruleProviders map[string]map[string]any) {
+	if len(rulesetName) == 0 {
+		return
+	}
 	rulesetName = strings.ToLower(rulesetName)
 	rulesetNameNew := NewRuleSetGeoipName(rulesetName)
 	if _, ok := ruleProviders[rulesetNameNew]; !ok {
@@ -155,6 +167,9 @@ func AddRuleSetGeoip2(rulesetName string, ruleProviders map[string]map[string]an
 }
 
 func AddRuleSetAsn2(rulesetName string, ruleProviders map[string]map[string]any) {
+	if len(rulesetName) == 0 {
+		return
+	}
 	rulesetName = strings.ToLower(rulesetName)
 	rulesetNameNew := NewRuleSetAsnName(rulesetName)
 	if _, ok := ruleProviders[rulesetNameNew]; !ok {
