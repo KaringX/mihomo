@@ -75,6 +75,7 @@ func AddRuleSetGeosite(rulesetName string, ruleProviders map[string]providerType
 	if _, ok := ruleProviders[rulesetName]; !ok {
 		filePath := fmt.Sprintf("./ruleset/%s.mrs", rulesetName)
 		mapping := make(map[string]any)
+		mapping["geo"] = true
 		mapping["type"] = "http"
 		mapping["behavior"] = "domain"
 		mapping["format"] = "mrs"
@@ -98,6 +99,7 @@ func AddRuleSetGeosite2(rulesetName string, ruleProviders map[string]map[string]
 	if _, ok := ruleProviders[rulesetName]; !ok {
 		filePath := fmt.Sprintf("./ruleset/%s.mrs", rulesetName)
 		mapping := make(map[string]any)
+		mapping["geo"] = true
 		mapping["type"] = "http"
 		mapping["behavior"] = "domain"
 		mapping["format"] = "mrs"
@@ -116,6 +118,7 @@ func AddRuleSetGeoip(rulesetName string, ruleProviders map[string]providerTypes.
 		filePath := fmt.Sprintf("./ruleset/%s.mrs", rulesetName)
 
 		mapping := make(map[string]any)
+		mapping["geo"] = true
 		mapping["type"] = "http"
 		mapping["behavior"] = "ipcidr"
 		mapping["format"] = "mrs"
@@ -140,6 +143,7 @@ func AddRuleSetGeoip2(rulesetName string, ruleProviders map[string]map[string]an
 	if _, ok := ruleProviders[rulesetName]; !ok {
 		filePath := fmt.Sprintf("./ruleset/%s.mrs", rulesetName)
 		mapping := make(map[string]any)
+		mapping["geo"] = true
 		mapping["type"] = "http"
 		mapping["behavior"] = "ipcidr"
 		mapping["format"] = "mrs"
@@ -157,6 +161,7 @@ func AddRuleSetAsn2(rulesetName string, ruleProviders map[string]map[string]any)
 	if _, ok := ruleProviders[rulesetName]; !ok {
 		filePath := fmt.Sprintf("./ruleset/%s.mrs", rulesetName)
 		mapping := make(map[string]any)
+		mapping["geo"] = true
 		mapping["type"] = "http"
 		mapping["behavior"] = "ipcidr"
 		mapping["format"] = "mrs"
