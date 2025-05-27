@@ -1,7 +1,6 @@
 package route
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
@@ -23,7 +22,9 @@ func restartRouter() http.Handler {
 
 func restart(w http.ResponseWriter, r *http.Request) {
 	// modify from https://github.com/AdguardTeam/AdGuardHome/blob/595484e0b3fb4c457f9bb727a6b94faa78a66c5f/internal/home/controlupdate.go#L108
-	execPath, err := os.Executable()
+	render.Status(r, http.StatusInternalServerError) //meta-improve
+	render.JSON(w, r, newError("Not Support"))       //meta-improve
+	/*execPath, err := os.Executable()//meta-improve
 	if err != nil {
 		render.Status(r, http.StatusInternalServerError)
 		render.JSON(w, r, newError(fmt.Sprintf("getting path: %s", err)))
@@ -39,7 +40,7 @@ func restart(w http.ResponseWriter, r *http.Request) {
 	// The background context is used because the underlying functions wrap it
 	// with timeout and shut down the server, which handles current request.  It
 	// also should be done in a separate goroutine for the same reason.
-	go restartExecutable(execPath)
+	go restartExecutable(execPath)*/
 }
 
 func restartExecutable(execPath string) {
