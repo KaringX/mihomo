@@ -12,7 +12,7 @@ import (
 	"github.com/metacubex/randv2"
 )
 
-const udpBufferSize = 65535
+const udpBufferSize = 10240 //meta-improve
 
 type ObfsWeChatUDPConn struct {
 	orig       net.PacketConn

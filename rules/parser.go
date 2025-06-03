@@ -20,17 +20,22 @@ func ParseRule(tp, payload, target string, params []string, subRules map[string]
 	case "DOMAIN-REGEX":
 		parsed, parseErr = RC.NewDomainRegex(payload, target)
 	case "GEOSITE":
-		parsed, parseErr = RC.NewGEOSITE(payload, target)
+		//parsed, parseErr = RC.NewGEOSITE(payload, target) //meta-improve
+		parsed, parseErr = RP.NewRuleSet(NewRuleSetGeositeName(payload), target, false, false) //meta-improve
 	case "GEOIP":
 		isSrc, noResolve := RC.ParseParams(params)
-		parsed, parseErr = RC.NewGEOIP(payload, target, isSrc, noResolve)
+		//parsed, parseErr = RC.NewGEOIP(payload, target, isSrc, noResolve) //meta-improve
+		parsed, parseErr = RP.NewRuleSet(NewRuleSetGeoipName(payload), target, isSrc, noResolve) //meta-improve
 	case "SRC-GEOIP":
-		parsed, parseErr = RC.NewGEOIP(payload, target, true, true)
+		//parsed, parseErr = RC.NewGEOIP(payload, target, true, true)//meta-improve
+		parsed, parseErr = RP.NewRuleSet(NewRuleSetGeoipName(payload), target, true, true) //meta-improve
 	case "IP-ASN":
 		isSrc, noResolve := RC.ParseParams(params)
-		parsed, parseErr = RC.NewIPASN(payload, target, isSrc, noResolve)
+		//parsed, parseErr = RC.NewIPASN(payload, target, isSrc, noResolve)//meta-improve
+		parsed, parseErr = RP.NewRuleSet(NewRuleSetAsnName(payload), target, isSrc, noResolve) //meta-improve
 	case "SRC-IP-ASN":
-		parsed, parseErr = RC.NewIPASN(payload, target, true, true)
+		//parsed, parseErr = RC.NewIPASN(payload, target, true, true)//meta-improve
+		parsed, parseErr = RP.NewRuleSet(NewRuleSetAsnName(payload), target, true, true) //meta-improve
 	case "IP-CIDR", "IP-CIDR6":
 		isSrc, noResolve := RC.ParseParams(params)
 		parsed, parseErr = RC.NewIPCIDR(payload, target, RC.WithIPCIDRSourceIP(isSrc), RC.WithIPCIDRNoResolve(noResolve))
