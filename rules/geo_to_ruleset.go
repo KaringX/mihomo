@@ -167,7 +167,7 @@ func AddRuleSetGeoip2(rulesetName string, ruleProviders map[string]map[string]an
 	}
 }
 
-func AddRuleSetAsn2(rulesetName string, ruleProviders map[string]map[string]any) {
+func AddRuleSetAsn2(rulesetNamePrefix string, rulesetName string, ruleProviders map[string]map[string]any) {
 	if len(rulesetName) == 0 {
 		return
 	}
@@ -181,7 +181,7 @@ func AddRuleSetAsn2(rulesetName string, ruleProviders map[string]map[string]any)
 		mapping["behavior"] = "ipcidr"
 		mapping["format"] = "mrs"
 		mapping["path"] = fmt.Sprintf("./ruleset/asn/%s.mrs", rulesetName)
-		mapping["url"] = fmt.Sprintf("%s/%s.mrs", GetAsnRuleSetUrl(), rulesetName)
+		mapping["url"] = fmt.Sprintf("%s/%s%s.mrs", GetAsnRuleSetUrl(), rulesetNamePrefix, rulesetName)
 		mapping["interval"] = GetUpdateInterval()
 		mapping["proxy"] = GetDownloadProxy()
 		ruleProviders[rulesetNameNew] = mapping
