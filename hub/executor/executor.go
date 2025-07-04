@@ -6,6 +6,7 @@ import (
 	"net/netip"
 	"os"
 	"runtime"
+	"runtime/debug"
 	"strconv"
 	"sync"
 	"time"
@@ -82,7 +83,7 @@ func ParseWithBytes(buf []byte) (*config.Config, error) {
 }
 
 // ApplyConfig dispatch configure to all parts without ExternalController
-func ApplyConfig(cfg *config.Config, force bool) {
+func ApplyConfig(cfg *config.Config, force bool) (err error) { //meta-improve
 	mux.Lock()
 	defer mux.Unlock()
 	log.SetLevel(cfg.General.LogLevel)
@@ -105,8 +106,14 @@ func ApplyConfig(cfg *config.Config, force bool) {
 	updateGeneral(cfg.General, true)
 	updateNTP(cfg.NTP)
 	updateDNS(cfg.DNS, cfg.General.IPv6)
-	updateListeners(cfg.General, cfg.Listeners, force)
-	updateTun(cfg.General) // tun should not care "force"
+	err = updateListeners(cfg.General, cfg.Listeners, force) //meta-improve
+	if err != nil {
+		return err
+	}
+	err = updateTun(cfg.General) // tun should not care "force" //meta-improve
+	if err != nil {
+		return err
+	}
 	updateIPTables(cfg)
 	updateTunnels(cfg.Tunnels)
 
@@ -117,10 +124,12 @@ func ApplyConfig(cfg *config.Config, force bool) {
 	updateProfile(cfg)
 	loadProvider(cfg.RuleProviders)
 	runtime.GC()
+	debug.FreeOSMemory() //meta-improve
 	tunnel.OnRunning()
 	updateUpdater(cfg)
 
 	resolver.ResetConnection()
+	return nil //meta-improve
 }
 
 func initInnerTcp() {
@@ -185,7 +194,7 @@ func GetGeneral() *config.General {
 	return general
 }
 
-func updateListeners(general *config.General, listeners map[string]C.InboundListener, force bool) {
+func updateListeners(general *config.General, listeners map[string]C.InboundListener, force bool) (err error) { //meta-improve
 	listener.PatchInboundListeners(listeners, tunnel.Tunnel, true)
 	if !force {
 		return
@@ -199,18 +208,22 @@ func updateListeners(general *config.General, listeners map[string]C.InboundList
 
 	bindAddress := general.BindAddress
 	listener.SetBindAddress(bindAddress)
+	err = listener.ReCreateMixed(general.MixedPort, tunnel.Tunnel) //meta-improve
+	if err != nil {
+		return err
+	}
 	listener.ReCreateHTTP(general.Port, tunnel.Tunnel)
 	listener.ReCreateSocks(general.SocksPort, tunnel.Tunnel)
 	listener.ReCreateRedir(general.RedirPort, tunnel.Tunnel)
 	listener.ReCreateTProxy(general.TProxyPort, tunnel.Tunnel)
-	listener.ReCreateMixed(general.MixedPort, tunnel.Tunnel)
 	listener.ReCreateShadowSocks(general.ShadowSocksConfig, tunnel.Tunnel)
 	listener.ReCreateVmess(general.VmessConfig, tunnel.Tunnel)
 	listener.ReCreateTuic(general.TuicServer, tunnel.Tunnel)
+	return nil //meta-improve
 }
 
-func updateTun(general *config.General) {
-	listener.ReCreateTun(general.Tun, tunnel.Tunnel)
+func updateTun(general *config.General) (err error) { //meta-improve
+	return listener.ReCreateTun(general.Tun, tunnel.Tunnel)
 }
 
 func updateExperimental(c *config.Experimental) {

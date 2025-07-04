@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const udpBufferSize = 65535
+const udpBufferSize = 10240 //meta-improve
 
 type ObfsUDPConn struct {
 	orig       net.PacketConn

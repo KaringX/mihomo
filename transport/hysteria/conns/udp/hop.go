@@ -22,9 +22,11 @@ const (
 // ObfsUDPHopClientPacketConn is the UDP port-hopping packet connection for client side.
 // It hops to a different local & server port every once in a while.
 type ObfsUDPHopClientPacketConn struct {
-	serverAddr  net.Addr // Combined udpHopAddr
-	serverAddrs []net.Addr
-	hopInterval time.Duration
+	serverAddr net.Addr // Combined udpHopAddr
+	//serverAddrs []net.Addr //meta-improve
+	serverAddrsIp    net.IP   //meta-improve
+	serverAddrsPorts []uint16 //meta-improve
+	hopInterval      time.Duration
 
 	obfs obfs.Obfuscator
 
@@ -73,22 +75,24 @@ func NewObfsUDPHopClientPacketConn(server string, serverPorts string, hopInterva
 	if err != nil {
 		return nil, err
 	}
-	serverAddrs := make([]net.Addr, len(ports))
+	/*serverAddrs := make([]net.Addr, len(ports))//meta-improve
 	for i, port := range ports {
 		serverAddrs[i] = &net.UDPAddr{
 			IP:   net.ParseIP(ip),
 			Port: int(port),
 		}
-	}
+	}*/
 	hopAddr := udpHopAddr(server)
 	conn := &ObfsUDPHopClientPacketConn{
-		serverAddr:  &hopAddr,
-		serverAddrs: serverAddrs,
-		hopInterval: hopInterval,
-		obfs:        obfs,
-		addrIndex:   randv2.IntN(len(serverAddrs)),
-		recvQueue:   make(chan *udpPacket, packetQueueSize),
-		closeChan:   make(chan struct{}),
+		serverAddr: &hopAddr,
+		//serverAddrs: serverAddrs,
+		serverAddrsIp:    net.ParseIP(ip), //meta-improve
+		serverAddrsPorts: ports,           //meta-improve
+		hopInterval:      hopInterval,
+		obfs:             obfs,
+		addrIndex:        randv2.IntN(len(serverPorts)), //meta-improve
+		recvQueue:        make(chan *udpPacket, packetQueueSize),
+		closeChan:        make(chan struct{}),
 		bufPool: sync.Pool{
 			New: func() interface{} {
 				return make([]byte, udpBufferSize)
@@ -113,10 +117,11 @@ func NewObfsUDPHopClientPacketConn(server string, serverPorts string, hopInterva
 }
 
 func (c *ObfsUDPHopClientPacketConn) recvRoutine(conn net.PacketConn) {
+	buf := c.bufPool.Get().([]byte) //meta-improve
 	for {
-		buf := c.bufPool.Get().([]byte)
 		n, addr, err := conn.ReadFrom(buf)
 		if err != nil {
+			c.bufPool.Put(buf) //meta-improve
 			return
 		}
 		select {
@@ -124,6 +129,7 @@ func (c *ObfsUDPHopClientPacketConn) recvRoutine(conn net.PacketConn) {
 		default:
 			// Drop the packet if the queue is full
 			c.bufPool.Put(buf)
+			buf = c.bufPool.Get().([]byte) //meta-improve
 		}
 	}
 }
@@ -177,7 +183,7 @@ func (c *ObfsUDPHopClientPacketConn) hop(dialer utils.PacketDialer, rAddr net.Ad
 		_ = trySetPacketConnWriteBuffer(c.currentConn, c.writeBufferSize)
 	}
 	go c.recvRoutine(c.currentConn)
-	c.addrIndex = randv2.IntN(len(c.serverAddrs))
+	c.addrIndex = randv2.IntN(len(c.serverAddrsPorts)) //meta-improve
 }
 
 func (c *ObfsUDPHopClientPacketConn) ReadFrom(b []byte) (int, net.Addr, error) {
@@ -223,7 +229,11 @@ func (c *ObfsUDPHopClientPacketConn) WriteTo(b []byte, addr net.Addr) (int, erro
 		}
 	*/
 	// Skip the check for now, always write to the server
-	return c.currentConn.WriteTo(b, c.serverAddrs[c.addrIndex])
+	serverAddrs := &net.UDPAddr{ //meta-improve
+		IP:   c.serverAddrsIp,
+		Port: int(c.serverAddrsPorts[c.addrIndex]),
+	}
+	return c.currentConn.WriteTo(b, serverAddrs) //meta-improve
 }
 
 func (c *ObfsUDPHopClientPacketConn) Close() error {
@@ -241,7 +251,7 @@ func (c *ObfsUDPHopClientPacketConn) Close() error {
 	err := c.currentConn.Close()
 	close(c.closeChan)
 	c.closed = true
-	c.serverAddrs = nil // For GC
+	c.serverAddrsPorts = nil // For GC //meta-improve
 	return err
 }
 
