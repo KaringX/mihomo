@@ -40,16 +40,19 @@ func WithSecret(secret string) Option {
 }
 
 // ApplyConfig dispatch configure to all parts include ExternalController
-func ApplyConfig(cfg *config.Config) {
-	applyRoute(cfg)
-	executor.ApplyConfig(cfg, true)
+func ApplyConfig(cfg *config.Config) error { //meta-improve
+	err := applyRoute(cfg) //meta-improve
+	if err != nil {        //meta-improve
+		return err
+	}
+	return executor.ApplyConfig(cfg, true) //meta-improve
 }
 
-func applyRoute(cfg *config.Config) {
+func applyRoute(cfg *config.Config) error {
 	if cfg.Controller.ExternalUI != "" {
 		route.SetUIPath(cfg.Controller.ExternalUI)
 	}
-	route.ReCreateServer(&route.Config{
+	return route.ReCreateServer(&route.Config{ //meta-improve
 		Addr:        cfg.Controller.ExternalController,
 		TLSAddr:     cfg.Controller.ExternalControllerTLS,
 		UnixAddr:    cfg.Controller.ExternalControllerUnix,
@@ -86,6 +89,5 @@ func Parse(configBytes []byte, options ...Option) error {
 		option(cfg)
 	}
 
-	ApplyConfig(cfg)
-	return nil
+	return ApplyConfig(cfg) //meta-improve
 }

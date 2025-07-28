@@ -2,6 +2,7 @@ package statistic
 
 import (
 	"os"
+	"runtime"
 	"time"
 
 	"github.com/metacubex/mihomo/common/atomic"
@@ -78,12 +79,15 @@ func (m *Manager) Memory() uint64 {
 	return m.memory
 }
 
-func (m *Manager) Snapshot() *Snapshot {
+func (m *Manager) Snapshot(includeConnections bool) *Snapshot { //meta-improve
 	var connections []*TrackerInfo
-	m.Range(func(c Tracker) bool {
-		connections = append(connections, c.Info())
-		return true
-	})
+	if includeConnections { //meta-improve
+		m.Range(func(c Tracker) bool {
+			connections = append(connections, c.Info())
+			return true
+		})
+	}
+	m.updateMemory() //meta-improve
 	return &Snapshot{
 		UploadTotal:   m.uploadTotal.Load(),
 		DownloadTotal: m.downloadTotal.Load(),
@@ -93,11 +97,9 @@ func (m *Manager) Snapshot() *Snapshot {
 }
 
 func (m *Manager) updateMemory() {
-	stat, err := m.process.MemoryInfo()
-	if err != nil {
-		return
-	}
-	m.memory = stat.RSS
+	var memStats runtime.MemStats                                                                   //meta-improve
+	runtime.ReadMemStats(&memStats)                                                                 //meta-improve
+	m.memory = memStats.StackInuse + memStats.HeapInuse + memStats.HeapIdle - memStats.HeapReleased //meta-improve
 }
 
 func (m *Manager) ResetStatistic() {
