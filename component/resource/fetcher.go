@@ -154,7 +154,7 @@ func (f *Fetcher[V]) pullLoop(forceUpdate bool) {
 		f.updateWithLog()
 	}
 	if attempt := f.backoff.Attempt(); attempt > 0 { // f.Update() was failed, decrease the interval from backoff to achieve fast retry
-		if duration := f.backoff.ForAttempt(attempt); duration < initialInterval {
+		if duration := f.backoff.ForAttempt(attempt); duration < initialInterval || initialInterval < 0 { //meta-improve
 			initialInterval = duration
 		}
 	}
