@@ -346,6 +346,7 @@ func loadProvider[P provider.Provider](providers map[string]P) {
 		if count > 20 {
 			count = 20
 		}
+	}
 	wg := sync.WaitGroup{}
 	ch := make(chan struct{}, count) //meta-improve
 	for _, pv := range providers {
