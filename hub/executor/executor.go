@@ -338,9 +338,16 @@ func loadProvider[P provider.Provider](providers map[string]P) {
 			}
 		}
 	}
-
+	count := concurrentCount    //meta-improve
+	if count > len(providers) { //meta-improve
+		count = len(providers)
+	}
+	if runtime.GOOS == "ios" { //meta-improve
+		if count > 20 {
+			count = 20
+		}
 	wg := sync.WaitGroup{}
-	ch := make(chan struct{}, concurrentCount)
+	ch := make(chan struct{}, count) //meta-improve
 	for _, pv := range providers {
 		pv := pv
 		wg.Add(1)
