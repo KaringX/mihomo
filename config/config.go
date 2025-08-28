@@ -1498,9 +1498,15 @@ func parseDNS(rawCfg *RawConfig, hosts *trie.DomainTrie[resolver.HostValue], rul
 				dnsCfg.FallbackDomainFilter = append(dnsCfg.FallbackDomainFilter, matcher)
 			}*/
 			for idx, ruleSet := range cfg.FallbackFilter.GeoSite { //meta-improve
-				subkeys := strings.Split(ruleSet, ":")
-				subkeys = subkeys[1:]
-				subkeys = strings.Split(subkeys[0], ",")
+				subkeys := []string{}
+				if strings.Contains(ruleSet, ":") {
+					subkeys := strings.Split(ruleSet, ":")
+					subkeys = subkeys[1:]
+					subkeys = strings.Split(subkeys[0], ",")
+				} else {
+					subkeys = append(subkeys, ruleSet)
+				}
+
 				for _, domainSetName := range subkeys {
 					rulsetName, err := rules.AddRuleSetGeosite(domainSetName, ruleProviders)
 					if err != nil {
