@@ -1,10 +1,8 @@
 package common
 
 import (
-	"github.com/metacubex/mihomo/component/geodata"
 	"github.com/metacubex/mihomo/component/mmdb"
 	C "github.com/metacubex/mihomo/constant"
-	"github.com/metacubex/mihomo/log"
 )
 
 type ASN struct {
@@ -58,11 +56,10 @@ func (a *ASN) GetASN() string {
 }
 
 func NewIPASN(asn string, adapter string, isSrc, noResolveIP bool) (*ASN, error) {
-	if err := geodata.InitASN(); err != nil {
+	/*if err := geodata.InitASN(); err != nil {//meta-improve
 		log.Errorln("can't initial ASN: %s", err)
 		return nil, err
-	}
-
+	}*/
 	return &ASN{
 		Base:        &Base{},
 		asn:         asn,

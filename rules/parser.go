@@ -37,11 +37,9 @@ func ParseRule(tp, payload, target string, params []string, subRules map[string]
 		parsed, parseErr = RP.NewRuleSet(NewRuleSetGeoipName(payload), target, true, true) //meta-improve
 	case "IP-ASN":
 		isSrc, noResolve := RC.ParseParams(params)
-		//parsed, parseErr = RC.NewIPASN(payload, target, isSrc, noResolve)//meta-improve
-		parsed, parseErr = RP.NewRuleSet(NewRuleSetAsnName(payload), target, isSrc, noResolve) //meta-improve
+		parsed, parseErr = RC.NewIPASN(payload, target, isSrc, noResolve)
 	case "SRC-IP-ASN":
-		//parsed, parseErr = RC.NewIPASN(payload, target, true, true)//meta-improve
-		parsed, parseErr = RP.NewRuleSet(NewRuleSetAsnName(payload), target, true, true) //meta-improve
+		parsed, parseErr = RC.NewIPASN(payload, target, true, true)
 	case "IP-CIDR", "IP-CIDR6":
 		isSrc, noResolve := RC.ParseParams(params)
 		parsed, parseErr = RC.NewIPCIDR(payload, target, RC.WithIPCIDRSourceIP(isSrc), RC.WithIPCIDRNoResolve(noResolve))
