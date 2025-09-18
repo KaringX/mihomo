@@ -263,9 +263,10 @@ type RawTun struct {
 	AutoDetectInterface bool       `yaml:"auto-detect-interface" json:"auto-detect-interface"` //meta-improve
 
 	MTU        uint32 `yaml:"mtu" json:"mtu,omitempty"`
-	GSO        bool   `yaml:"gso" json:"gso,omitempty"`
-	GSOMaxSize uint32 `yaml:"gso-max-size" json:"gso-max-size,omitempty"`
-	//Inet4Address           []netip.Prefix `yaml:"inet4-address" json:"inet4-address,omitempty"`
+	MTU                    uint32         `yaml:"mtu" json:"mtu,omitempty"`
+	GSO                    bool           `yaml:"gso" json:"gso,omitempty"`
+	GSOMaxSize             uint32         `yaml:"gso-max-size" json:"gso-max-size,omitempty"`
+	Inet4Address           []netip.Prefix `yaml:"inet4-address" json:"inet4-address,omitempty"` //meta-improve
 	Inet6Address           []netip.Prefix `yaml:"inet6-address" json:"inet6-address,omitempty"`
 	IPRoute2TableIndex     int            `yaml:"iproute2-table-index" json:"iproute2-table-index,omitempty"`
 	IPRoute2RuleIndex      int            `yaml:"iproute2-rule-index" json:"iproute2-rule-index,omitempty"`
@@ -683,7 +684,7 @@ func ParseRawConfig(rawCfg *RawConfig) (*Config, error) {
 	}
 	config.DNS = dnsCfg
 
-	err = parseTun(rawCfg.Tun, config.General)
+	err = parseTun(&rawCfg.Tun, config.General) //meta-improve
 	if err != nil {
 		return nil, err
 	}
@@ -1539,13 +1540,13 @@ func parseAuthentication(rawRecords []string) []auth.AuthUser {
 	return users
 }
 
-func parseTun(rawTun RawTun, general *General) error {
+func parseTun(rawTun *RawTun, general *General) error { //meta-improve
 	tunAddressPrefix := T.FakeIPRange()
 	if !tunAddressPrefix.IsValid() {
 		tunAddressPrefix = netip.MustParsePrefix("198.18.0.1/16")
 	}
 	tunAddressPrefix = netip.PrefixFrom(tunAddressPrefix.Addr(), 30)
-
+	rawTun.Inet4Address = []netip.Prefix{tunAddressPrefix} //meta-improve
 	if !general.IPv6 || !verifyIP6() {
 		rawTun.Inet6Address = nil
 	}
