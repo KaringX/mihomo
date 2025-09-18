@@ -262,7 +262,6 @@ type RawTun struct {
 	AutoRoute           bool       `yaml:"auto-route" json:"auto-route"`
 	AutoDetectInterface bool       `yaml:"auto-detect-interface" json:"auto-detect-interface"` //meta-improve
 
-	MTU        uint32 `yaml:"mtu" json:"mtu,omitempty"`
 	MTU                    uint32         `yaml:"mtu" json:"mtu,omitempty"`
 	GSO                    bool           `yaml:"gso" json:"gso,omitempty"`
 	GSOMaxSize             uint32         `yaml:"gso-max-size" json:"gso-max-size,omitempty"`
