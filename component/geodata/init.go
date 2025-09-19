@@ -87,6 +87,8 @@ func downloadToPath(url string, path string) (err error) {
 }
 
 func InitGeoSite() error {
+	geoSiteEnable.Store(false) //meta-improve
+	return nil                 //meta-improve
 	geoSiteEnable.Store(true)
 	initGeoSiteMutex.Lock()
 	defer initGeoSiteMutex.Unlock()
@@ -114,6 +116,8 @@ func InitGeoSite() error {
 }
 
 func InitGeoIP() error {
+	geoIpEnable.Store(false) //meta-improve
+	return nil               //meta-improve
 	geoIpEnable.Store(true)
 	initGeoIPMutex.Lock()
 	defer initGeoIPMutex.Unlock()
@@ -165,6 +169,8 @@ func InitGeoIP() error {
 }
 
 func InitASN() error {
+	asnEnable.Store(false) //meta-improve
+	return nil             //meta-improve
 	asnEnable.Store(true)
 	initASNMutex.Lock()
 	defer initASNMutex.Unlock()
