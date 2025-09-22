@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"runtime"
 	"sync"
 	"time"
 
@@ -169,8 +170,11 @@ func InitGeoIP() error {
 }
 
 func InitASN() error {
-	asnEnable.Store(false) //meta-improve
-	return nil             //meta-improve
+	if runtime.GOOS == "ios" { //meta-improve
+		asnEnable.Store(false)
+		return nil
+	}
+
 	asnEnable.Store(true)
 	initASNMutex.Lock()
 	defer initASNMutex.Unlock()

@@ -2,6 +2,7 @@ package rules
 
 import (
 	"fmt"
+	"runtime"
 
 	C "github.com/metacubex/mihomo/constant"
 	RC "github.com/metacubex/mihomo/rules/common"
@@ -34,12 +35,18 @@ func ParseRule(tp, payload, target string, params []string, subRules map[string]
 	case "SRC-GEOIP":
 		parsed, parseErr = RG.NewGEOIPRuleset(payload, target, true, true) //meta-improve
 	case "IP-ASN":
-		ignore = true // meta-improve
-		//isSrc, noResolve := RC.ParseParams(params) // meta-improve
-		//parsed, parseErr = RG.NewIPASNRuleset(payload, target, isSrc, noResolve) //meta-improve
+		ignore = runtime.GOOS == "ios" // meta-improve
+		if !ignore {                   // meta-improve
+			isSrc, noResolve := RC.ParseParams(params)
+			parsed, parseErr = RC.NewIPASN(payload, target, isSrc, noResolve)
+			//parsed, parseErr = RG.NewIPASNRuleset(payload, target, isSrc, noResolve) //meta-improve
+		}
 	case "SRC-IP-ASN":
-		ignore = true // meta-improve
-		//parsed, parseErr = RG.NewIPASNRuleset(payload, target, true, true) //meta-improve
+		ignore = runtime.GOOS == "ios" // meta-improve
+		if !ignore {                   // meta-improve
+			parsed, parseErr = RC.NewIPASN(payload, target, true, true)
+			//parsed, parseErr = RG.NewIPASNRuleset(payload, target, true, true) //meta-improve
+		}
 	case "IP-CIDR", "IP-CIDR6":
 		isSrc, noResolve := RC.ParseParams(params)
 		parsed, parseErr = RC.NewIPCIDR(payload, target, RC.WithIPCIDRSourceIP(isSrc), RC.WithIPCIDRNoResolve(noResolve))
