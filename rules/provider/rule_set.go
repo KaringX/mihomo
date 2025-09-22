@@ -64,6 +64,14 @@ func (rs *RuleSet) getProvider() (P.RuleProvider, bool) {
 	return pp, ok
 }
 
+func (rs *RuleSet) NoResolveIP() bool { //meta-improve
+	return rs.noResolveIP
+}
+
+func (rs *RuleSet) Src() bool { //meta-improve
+	return rs.isSrc
+}
+
 func NewRuleSet(ruleProviderName string, adapter string, isSrc bool, noResolveIP bool) (*RuleSet, error) {
 	rs := &RuleSet{
 		Base:             &common.Base{},

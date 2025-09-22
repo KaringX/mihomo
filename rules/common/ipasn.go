@@ -62,6 +62,7 @@ func NewIPASN(asn string, adapter string, isSrc, noResolveIP bool) (*ASN, error)
 		log.Errorln("can't initial ASN: %s", err)
 		return nil, err
 	}
+
 	return &ASN{
 		Base:        &Base{},
 		asn:         asn,
