@@ -7,8 +7,6 @@ import (
 
 	"github.com/metacubex/mihomo/common/atomic"
 	"github.com/metacubex/mihomo/common/xsync"
-
-	"github.com/shirou/gopsutil/v4/process"
 )
 
 var DefaultManager *Manager
@@ -21,7 +19,7 @@ func init() {
 		downloadBlip:  atomic.NewInt64(0),
 		uploadTotal:   atomic.NewInt64(0),
 		downloadTotal: atomic.NewInt64(0),
-		process:       &process.Process{Pid: int32(os.Getpid())},
+		pid:           int32(os.Getpid()),
 	}
 
 	go DefaultManager.handle()
@@ -35,7 +33,7 @@ type Manager struct {
 	downloadBlip  atomic.Int64
 	uploadTotal   atomic.Int64
 	downloadTotal atomic.Int64
-	process       *process.Process
+	pid           int32
 	memory        uint64
 }
 
