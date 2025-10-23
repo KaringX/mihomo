@@ -3,6 +3,7 @@ package rules
 import (
 	"fmt"
 	"runtime"
+	"strings"
 
 	C "github.com/metacubex/mihomo/constant"
 	RC "github.com/metacubex/mihomo/rules/common"
@@ -31,9 +32,17 @@ func ParseRule(tp, payload, target string, params []string, subRules map[string]
 		parsed, parseErr = RG.NewGEOSITERuleset(payload, target) //meta-improve
 	case "GEOIP":
 		isSrc, noResolve := RC.ParseParams(params)
-		parsed, parseErr = RG.NewGEOIPRuleset(payload, target, isSrc, noResolve) //meta-improve
+		if strings.ToLower(payload) == "lan" { //meta-improve
+			parsed, parseErr = RG.NewGEOIPLan(payload, target, isSrc, noResolve) //meta-improve
+		} else {
+			parsed, parseErr = RG.NewGEOIPRuleset(payload, target, isSrc, noResolve) //meta-improve
+		}
 	case "SRC-GEOIP":
-		parsed, parseErr = RG.NewGEOIPRuleset(payload, target, true, true) //meta-improve
+		if strings.ToLower(payload) == "lan" { //meta-improve
+			parsed, parseErr = RG.NewGEOIPLan(payload, target, true, true) //meta-improve
+		} else {
+			parsed, parseErr = RG.NewGEOIPRuleset(payload, target, true, true) //meta-improve
+		}
 	case "IP-ASN":
 		ignore = runtime.GOOS == "ios" // meta-improve
 		if !ignore {                   // meta-improve

@@ -42,9 +42,6 @@ func (g *GEOIPRuleset) Match(metadata *C.Metadata, helper C.RuleMatchHelper) (bo
 		return false, ""
 	}
 
-	if g.GetCountry() == "lan" {
-		return g.isLan(ip), g.Adapter()
-	}
 	return g.RuleSet.Match(metadata, helper)
 }
 
@@ -54,9 +51,6 @@ func (g *GEOIPRuleset) MatchIp(ip netip.Addr) bool {
 		return false
 	}
 
-	if g.GetCountry() == "lan" {
-		return g.isLan(ip)
-	}
 	return g.RuleSet.MatchIp(ip)
 }
 

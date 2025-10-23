@@ -1450,11 +1450,19 @@ func parseDNS(rawCfg *RawConfig, ruleProviders map[string]providerTypes.RuleProv
 
 	if len(cfg.Fallback) != 0 {
 		if cfg.FallbackFilter.GeoIP {
-			matcher, err := RG.NewGEOIPRuleset(cfg.FallbackFilter.GeoIPCode, "dns.fallback-filter.geoip", false, true) //meta-improve
-			if err != nil {
-				return nil, fmt.Errorf("load GeoIP dns fallback filter error, %w", err)
+			if strings.ToLower(cfg.FallbackFilter.GeoIPCode) == "lan" { //meta-improve
+				matcher, err := RG.NewGEOIPLan(cfg.FallbackFilter.GeoIPCode, "dns.fallback-filter.geoip", false, true)
+				if err != nil {
+					return nil, fmt.Errorf("load GeoIP dns fallback filter error, %w", err)
+				}
+				dnsCfg.FallbackIPFilter = append(dnsCfg.FallbackIPFilter, matcher.DnsFallbackFilter())
+			} else { //meta-improve
+				matcher, err := RG.NewGEOIPRuleset(cfg.FallbackFilter.GeoIPCode, "dns.fallback-filter.geoip", false, true)
+				if err != nil {
+					return nil, fmt.Errorf("load GeoIP dns fallback filter error, %w", err)
+				}
+				dnsCfg.FallbackIPFilter = append(dnsCfg.FallbackIPFilter, matcher.DnsFallbackFilter())
 			}
-			dnsCfg.FallbackIPFilter = append(dnsCfg.FallbackIPFilter, matcher.DnsFallbackFilter())
 		}
 		if len(cfg.FallbackFilter.IPCIDR) > 0 {
 			cidrSet := cidr.NewIpCidrSet()
@@ -1689,7 +1697,11 @@ func parseIPCIDR(addresses []string, cidrSet *cidr.IpCidrSet, adapterName string
 			subkeys = subkeys[1:]
 			subkeys = strings.Split(subkeys[0], ",")
 			for _, country := range subkeys {
-				matcher, err = RG.NewGEOIPRuleset(country, adapterName, false, false) //meta-improve
+				if strings.ToLower(country) == "lan" { //meta-improve
+					matcher, err = RG.NewGEOIPLan(country, adapterName, false, false)
+				} else { //meta-improve
+					matcher, err = RG.NewGEOIPRuleset(country, adapterName, false, false)
+				}
 				if err != nil {
 					return nil, err
 				}
