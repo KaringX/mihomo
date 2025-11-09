@@ -55,7 +55,7 @@ func (c *classicalStrategy) payloadToRule(rule string) (C.Rule, bool, error) { /
 	tp, payload, target, params := common.ParseRulePayload(rule, false)
 	switch tp {
 	case "MATCH", "RULE-SET", "SUB-RULE":
-		return nil, false, fmt.Errorf("unsupported rule type on classical rule-set: %s", tp)
+		return nil, false, fmt.Errorf("unsupported rule type on classical rule-set: %s", tp) //meta-improve
 	}
 	return c.parse(tp, payload, target, params, nil)
 }

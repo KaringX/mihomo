@@ -48,11 +48,11 @@ func ApplyConfig(cfg *config.Config) error { //meta-improve
 	return executor.ApplyConfig(cfg, true) //meta-improve
 }
 
-func applyRoute(cfg *config.Config) error {
+func applyRoute(cfg *config.Config) error { //meta-improve
 	if cfg.Controller.ExternalUI != "" {
 		route.SetUIPath(cfg.Controller.ExternalUI)
 	}
-	return route.ReCreateServer(&route.Config{
+	return route.ReCreateServer(&route.Config{ //meta-improve
 		Addr:           cfg.Controller.ExternalController,
 		TLSAddr:        cfg.Controller.ExternalControllerTLS,
 		UnixAddr:       cfg.Controller.ExternalControllerUnix,

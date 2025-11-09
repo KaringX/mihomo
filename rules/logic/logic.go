@@ -168,7 +168,7 @@ func (logic *Logic) parsePayload(payload string, parseRule common.ParseRuleFunc)
 		for _, subRange := range subRanges {
 			subPayload := payload[subRange.start+1 : subRange.end]
 
-			rule, ignore, err := logic.payloadToRule(subPayload, parseRule)
+			rule, ignore, err := logic.payloadToRule(subPayload, parseRule) //meta-improve
 			if err != nil {
 				return err
 			}

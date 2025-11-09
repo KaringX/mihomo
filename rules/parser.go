@@ -111,7 +111,7 @@ func ParseRule(tp, payload, target string, params []string, subRules map[string]
 	}
 
 	if parseErr != nil {
-		return nil, ignore, parseErr
+		return nil, ignore, parseErr //meta-improve
 	}
 
 	return
