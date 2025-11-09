@@ -32,7 +32,7 @@ import (
 	"github.com/metacubex/mihomo/component/updater"
 	"github.com/metacubex/mihomo/config"
 	C "github.com/metacubex/mihomo/constant"
-	"github.com/metacubex/mihomo/constant/provider"
+	P "github.com/metacubex/mihomo/constant/provider"
 	"github.com/metacubex/mihomo/dns"
 	"github.com/metacubex/mihomo/listener"
 	authStore "github.com/metacubex/mihomo/listener/auth"
@@ -40,7 +40,7 @@ import (
 	"github.com/metacubex/mihomo/listener/inner"
 	"github.com/metacubex/mihomo/listener/tproxy"
 	"github.com/metacubex/mihomo/log"
-	"github.com/metacubex/mihomo/ntp"
+	"github.com/metacubex/mihomo/ntp/ntp"
 	"github.com/metacubex/mihomo/tunnel"
 )
 
@@ -107,11 +107,11 @@ func ApplyConfig(cfg *config.Config, force bool) (err error) { //meta-improve
 	updateNTP(cfg.NTP)
 	updateDNS(cfg.DNS, cfg.General.IPv6)
 	err = updateListeners(cfg.General, cfg.Listeners, force) //meta-improve
-	if err != nil {
+	if err != nil {                                          //meta-improve
 		return err
 	}
 	err = updateTun(cfg.General) // tun should not care "force" //meta-improve
-	if err != nil {
+	if err != nil {              //meta-improve
 		return err
 	}
 	updateIPTables(cfg)
@@ -209,13 +209,14 @@ func updateListeners(general *config.General, listeners map[string]C.InboundList
 	bindAddress := general.BindAddress
 	listener.SetBindAddress(bindAddress)
 	err = listener.ReCreateMixed(general.MixedPort, tunnel.Tunnel) //meta-improve
-	if err != nil {
+	if err != nil {                                                //meta-improve
 		return err
 	}
 	listener.ReCreateHTTP(general.Port, tunnel.Tunnel)
 	listener.ReCreateSocks(general.SocksPort, tunnel.Tunnel)
 	listener.ReCreateRedir(general.RedirPort, tunnel.Tunnel)
 	listener.ReCreateTProxy(general.TProxyPort, tunnel.Tunnel)
+	//listener.ReCreateMixed(general.MixedPort, tunnel.Tunnel) //meta-improve
 	listener.ReCreateShadowSocks(general.ShadowSocksConfig, tunnel.Tunnel)
 	listener.ReCreateVmess(general.VmessConfig, tunnel.Tunnel)
 	listener.ReCreateTuic(general.TuicServer, tunnel.Tunnel)
@@ -223,7 +224,7 @@ func updateListeners(general *config.General, listeners map[string]C.InboundList
 }
 
 func updateTun(general *config.General) (err error) { //meta-improve
-	return listener.ReCreateTun(general.Tun, tunnel.Tunnel)
+	return listener.ReCreateTun(general.Tun, tunnel.Tunnel) //meta-improve
 }
 
 func updateExperimental(c *config.Experimental) {
@@ -260,10 +261,11 @@ func updateDNS(c *config.DNS, generalIPv6 bool) {
 		return
 	}
 
+	ipv6 := c.IPv6 && generalIPv6
 	r := dns.NewResolver(dns.Config{
 		Main:                 c.NameServer,
 		Fallback:             c.Fallback,
-		IPv6:                 c.IPv6 && generalIPv6,
+		IPv6:                 ipv6,
 		IPv6Timeout:          c.IPv6Timeout,
 		FallbackIPFilter:     c.FallbackIPFilter,
 		FallbackDomainFilter: c.FallbackDomainFilter,
@@ -276,9 +278,12 @@ func updateDNS(c *config.DNS, generalIPv6 bool) {
 		CacheMaxSize:         c.CacheMaxSize,
 	})
 	m := dns.NewEnhancer(dns.EnhancerConfig{
-		EnhancedMode: c.EnhancedMode,
-		Pool:         c.FakeIPRange,
-		UseHosts:     c.UseHosts,
+		IPv6:          ipv6,
+		EnhancedMode:  c.EnhancedMode,
+		FakeIPPool:    c.FakeIPPool,
+		FakeIPPool6:   c.FakeIPPool6,
+		FakeIPSkipper: c.FakeIPSkipper,
+		UseHosts:      c.UseHosts,
 	})
 
 	// reuse cache of old host mapper
@@ -312,18 +317,18 @@ func updateHosts(tree *trie.DomainTrie[resolver.HostValue]) {
 	resolver.DefaultHosts = resolver.NewHosts(tree)
 }
 
-func updateProxies(proxies map[string]C.Proxy, providers map[string]provider.ProxyProvider) {
+func updateProxies(proxies map[string]C.Proxy, providers map[string]P.ProxyProvider) {
 	tunnel.UpdateProxies(proxies, providers)
 }
 
-func updateRules(rules []C.Rule, subRules map[string][]C.Rule, ruleProviders map[string]provider.RuleProvider) {
+func updateRules(rules []C.Rule, subRules map[string][]C.Rule, ruleProviders map[string]P.RuleProvider) {
 	tunnel.UpdateRules(rules, subRules, ruleProviders)
 }
 
-func loadProvider[P provider.Provider](providers map[string]P) {
-	load := func(pv P) {
+func loadProvider[T P.Provider](providers map[string]T) {
+	load := func(pv T) {
 		name := pv.Name()
-		if pv.VehicleType() == provider.Compatible {
+		if pv.VehicleType() == P.Compatible {
 			log.Infoln("Start initial compatible provider %s", name)
 		} else {
 			log.Infoln("Start initial provider %s", name)
@@ -331,11 +336,11 @@ func loadProvider[P provider.Provider](providers map[string]P) {
 
 		if err := pv.Initial(); err != nil {
 			switch pv.Type() {
-			case provider.Proxy:
+			case P.Proxy:
 				{
 					log.Errorln("initial proxy provider %s error: %v", name, err)
 				}
-			case provider.Rule:
+			case P.Rule:
 				{
 					log.Errorln("initial rule provider %s error: %v", name, err)
 				}
