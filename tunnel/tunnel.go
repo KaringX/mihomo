@@ -209,7 +209,7 @@ func ValidRuleProvider() bool { // meta-improve
 	return ruleProviders != nil
 }
 
-func AppendRuleProvider(tag string, rp provider.RuleProvider) { // meta-improve
+func AppendRuleProvider(tag string, rp P.RuleProvider) { // meta-improve
 	configMux.Lock()
 	defer configMux.Unlock()
 	if ruleProviders == nil {

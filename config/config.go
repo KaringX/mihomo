@@ -1074,8 +1074,8 @@ func parseRules(rulesConfig []string, proxies map[string]C.Proxy, ruleProviders 
 		if parseErr != nil {
 			return nil, fmt.Errorf("%s[%d] [%s] error: %s", format, idx, line, parseErr.Error())
 		}
-		if ignore {
-			continue // meta-improve
+		if ignore { // meta-improve
+			continue
 		}
 		for _, name := range parsed.ProviderNames() {
 			if _, ok := ruleProviders[name]; !ok {
@@ -1565,7 +1565,7 @@ func parseIPV6(rawCfg *RawConfig) {
 	}
 }
 
-func parseTun(rawTun RawTun, dns *DNS, general *General) error { //meta-improve
+func parseTun(rawTun *RawTun, dns *DNS, general *General) error { //meta-improve
 	tunAddressPrefix := dns.FakeIPRange
 	if !tunAddressPrefix.IsValid() {
 		tunAddressPrefix = netip.MustParsePrefix("198.18.0.1/16")
