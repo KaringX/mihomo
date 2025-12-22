@@ -87,13 +87,17 @@ func (c Cors) Apply(r chi.Router) {
 	}).Handler)
 }
 
-func ReCreateServer(cfg *Config) {
-	go start(cfg)
+func ReCreateServer(cfg *Config) error { //meta-improve
+	err := start(cfg) //meta-improve
+	if err != nil {   //meta-improve
+		return err
+	}
 	go startTLS(cfg)
 	go startUnix(cfg)
 	if inbound.SupportNamedPipe {
 		go startPipe(cfg)
 	}
+	return nil //meta-improve
 }
 
 func SetUIPath(path string) {
@@ -156,7 +160,7 @@ func router(isDebug bool, secret string, dohServer string, cors Cors) *chi.Mux {
 	return r
 }
 
-func start(cfg *Config) {
+func start(cfg *Config) error { //meta-improve
 	// first stop existing server
 	if httpServer != nil {
 		_ = httpServer.Close()
@@ -168,7 +172,7 @@ func start(cfg *Config) {
 		l, err := inbound.Listen("tcp", cfg.Addr)
 		if err != nil {
 			log.Errorln("External controller listen error: %s", err)
-			return
+			return err //meta-improve
 		}
 		log.Infoln("RESTful API listening at: %s", l.Addr().String())
 
@@ -176,10 +180,13 @@ func start(cfg *Config) {
 			Handler: router(cfg.IsDebug, cfg.Secret, cfg.DohServer, cfg.Cors),
 		}
 		httpServer = server
-		if err = server.Serve(l); err != nil {
-			log.Errorln("External controller serve error: %s", err)
-		}
+		go func() { //meta-improve
+			if err = server.Serve(l); err != nil {
+				log.Errorln("External controller serve error: %s", err)
+			}
+		}()
 	}
+	return nil //meta-improve
 }
 
 func startTLS(cfg *Config) {

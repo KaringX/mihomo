@@ -78,4 +78,4 @@ func ParseRulePayload(ruleRaw string, needTarget bool) (tp, payload, target stri
 	return
 }
 
-type ParseRuleFunc func(tp, payload, target string, params []string, subRules map[string][]C.Rule) (C.Rule, error)
+type ParseRuleFunc func(tp, payload, target string, params []string, subRules map[string][]C.Rule) (C.Rule, bool, error) // meta-improve

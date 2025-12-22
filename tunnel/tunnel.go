@@ -203,6 +203,33 @@ func UpdateRules(newRules []C.Rule, newSubRule map[string][]C.Rule, rp map[strin
 	configMux.Unlock()
 }
 
+func ValidRuleProvider() bool { // meta-improve
+	configMux.Lock()
+	defer configMux.Unlock()
+	return ruleProviders != nil
+}
+
+func AppendRuleProvider(tag string, rp P.RuleProvider) { // meta-improve
+	configMux.Lock()
+	defer configMux.Unlock()
+	if ruleProviders == nil {
+		return
+	}
+	if _, ok := ruleProviders[tag]; !ok {
+		ruleProviders[tag] = rp
+	}
+}
+
+func HasRuleProvider(tag string) bool { // meta-improve
+	configMux.Lock()
+	defer configMux.Unlock()
+	if ruleProviders == nil {
+		return false
+	}
+	_, ok := ruleProviders[tag]
+	return ok
+}
+
 // Proxies return all proxies
 func Proxies() map[string]C.Proxy {
 	return proxies
