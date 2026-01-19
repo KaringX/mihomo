@@ -1588,11 +1588,13 @@ func parseFakeIPRules(rawRules []string, ruleProviders map[string]P.RuleProvider
 			}
 		}
 
-		parsed, err := R.ParseRule(tp, payload, action, params, nil)
+		parsed, ignore, err := R.ParseRule(tp, payload, action, params, nil) //meta-improve
 		if err != nil {
 			return nil, fmt.Errorf("dns.fake-ip-filter[%d] [%s] error: %w", idx, line, err)
 		}
-
+		if ignore { // meta-improve
+			continue
+		}
 		if !isDomainRule(parsed.RuleType()) && parsed.RuleType() != C.MATCH {
 			return nil, fmt.Errorf("dns.fake-ip-filter[%d] [%s] error: rule type '%s' not supported, only domain-based rules allowed", idx, line, tp)
 		}
