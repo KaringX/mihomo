@@ -10,7 +10,7 @@ import (
 	"github.com/metacubex/mihomo/rules/provider"
 )
 
-type NewGEOIPRulesetHookFunc func(country string, adapter string) (string, error)
+type NewGEOIPRulesetHookFunc func(country string, adapter string) (string, bool, error)
 
 var (
 	NewGEOIPRulesetHook NewGEOIPRulesetHookFunc
@@ -18,6 +18,7 @@ var (
 
 type GEOIPRuleset struct {
 	*provider.RuleSet
+	not bool
 }
 
 var _ C.Rule = (*GEOIPRuleset)(nil)
@@ -41,8 +42,11 @@ func (g *GEOIPRuleset) Match(metadata *C.Metadata, helper C.RuleMatchHelper) (bo
 	if !ip.IsValid() {
 		return false, ""
 	}
-
-	return g.RuleSet.Match(metadata, helper)
+	match, adapter := g.RuleSet.Match(metadata, helper)
+	if g.not {
+		match = !match
+	}
+	return match, adapter
 }
 
 // MatchIp implements C.IpMatcher
@@ -51,7 +55,11 @@ func (g *GEOIPRuleset) MatchIp(ip netip.Addr) bool {
 		return false
 	}
 
-	return g.RuleSet.MatchIp(ip)
+	match := g.RuleSet.MatchIp(ip)
+	if g.not {
+		match = !match
+	}
+	return match
 }
 
 // MatchIp implements C.IpMatcher
@@ -63,7 +71,11 @@ func (g dnsFallbackFilterRuleset) MatchIp(ip netip.Addr) bool {
 	if g.isLan(ip) { // compatible with original behavior
 		return false
 	}
-	return g.RuleSet.MatchIp(ip)
+	match := g.RuleSet.MatchIp(ip)
+	if g.not {
+		match = !match
+	}
+	return match
 }
 
 type dnsFallbackFilterRuleset struct {
@@ -101,7 +113,7 @@ func (g *GEOIPRuleset) GetRecodeSize() int {
 
 func NewGEOIPRuleset(country string, adapter string, isSrc, noResolveIP bool) (*GEOIPRuleset, error) {
 	country = strings.ToLower(country)
-	country, err := NewGEOIPRulesetHook(country, adapter)
+	country, not, err := NewGEOIPRulesetHook(country, adapter)
 	if err != nil {
 		return nil, err
 	}
@@ -111,5 +123,6 @@ func NewGEOIPRuleset(country string, adapter string, isSrc, noResolveIP bool) (*
 	}
 	return &GEOIPRuleset{
 		RuleSet: ruleset,
+		not:     not,
 	}, nil
 }

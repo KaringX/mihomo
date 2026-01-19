@@ -10,7 +10,7 @@ import (
 	"github.com/metacubex/mihomo/rules/provider"
 )
 
-type NewGEOSITERulesetHookFunc func(country string, adapter string) (string, error)
+type NewGEOSITERulesetHookFunc func(country string, adapter string) (string, bool, error)
 
 var (
 	NewGEOSITERulesetHook NewGEOSITERulesetHookFunc
@@ -18,6 +18,7 @@ var (
 
 type GEOSITERuleset struct {
 	*provider.RuleSet
+	not bool
 }
 
 var _ C.Rule = (*GEOSITERuleset)(nil)
@@ -32,7 +33,11 @@ func (gs *GEOSITERuleset) Match(metadata *C.Metadata, helper C.RuleMatchHelper) 
 
 // MatchDomain implements C.DomainMatcher
 func (gs *GEOSITERuleset) MatchDomain(domain string) bool {
-	return gs.RuleSet.MatchDomain(domain)
+	match := gs.RuleSet.MatchDomain(domain)
+	if gs.not {
+		match = !match
+	}
+	return match
 }
 
 func (gs *GEOSITERuleset) Adapter() string {
@@ -53,7 +58,7 @@ func (gs *GEOSITERuleset) GetRecodeSize() int {
 
 func NewGEOSITERuleset(country string, adapter string) (*GEOSITERuleset, error) {
 	country = strings.ToLower(country)
-	country, err := NewGEOSITERulesetHook(country, adapter)
+	country, not, err := NewGEOSITERulesetHook(country, adapter)
 	if err != nil {
 		return nil, err
 	}
@@ -63,5 +68,6 @@ func NewGEOSITERuleset(country string, adapter string) (*GEOSITERuleset, error) 
 	}
 	return &GEOSITERuleset{
 		RuleSet: ruleset,
+		not:     not,
 	}, nil
 }
