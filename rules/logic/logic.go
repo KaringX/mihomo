@@ -74,13 +74,13 @@ func (r Range) containRange(preStart, preEnd int) bool {
 	return preStart < r.start && preEnd > r.end
 }
 
-func (logic *Logic) payloadToRule(subPayload string, parseRule common.ParseRuleFunc) (C.Rule, error) {
+func (logic *Logic) payloadToRule(subPayload string, parseRule common.ParseRuleFunc) (C.Rule, bool, error) { // meta-improve
 	tp, payload, target, param := common.ParseRulePayload(subPayload, false)
 	switch tp {
 	case "MATCH", "SUB-RULE":
-		return nil, fmt.Errorf("unsupported rule type [%s] on logic rule", tp)
+		return nil, false, fmt.Errorf("unsupported rule type [%s] on logic rule", tp) // meta-improve
 	case "":
-		return nil, fmt.Errorf("[%s] format is error", subPayload)
+		return nil, false, fmt.Errorf("[%s] format is error", subPayload) // meta-improve
 	}
 	return parseRule(tp, payload, target, param, nil)
 }
@@ -159,11 +159,13 @@ func (logic *Logic) parsePayload(payload string, parseRule common.ParseRuleFunc)
 	for _, subRange := range subRanges {
 		subPayload := payload[subRange.start+1 : subRange.end]
 
-		rule, err := logic.payloadToRule(subPayload, parseRule)
+		rule, ignore, err := logic.payloadToRule(subPayload, parseRule) //meta-improve
 		if err != nil {
 			return err
 		}
-
+		if ignore { // meta-improve
+			continue
+		}
 		rules = append(rules, rule)
 	}
 

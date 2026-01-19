@@ -50,6 +50,7 @@ func (f *Fetcher[V]) UpdatedAt() time.Time {
 }
 
 func (f *Fetcher[V]) Initial() (V, error) {
+	log.Infoln("[Provider] Initial %s", f.Name()) // meta-improve
 	if stat, fErr := os.Stat(f.vehicle.Path()); fErr == nil {
 		// local file exists, use it first
 		buf, err := os.ReadFile(f.vehicle.Path())
@@ -154,7 +155,7 @@ func (f *Fetcher[V]) pullLoop(forceUpdate bool) {
 		f.updateWithLog()
 	}
 	if attempt := f.backoff.Attempt(); attempt > 0 { // f.Update() was failed, decrease the interval from backoff to achieve fast retry
-		if duration := f.backoff.ForAttempt(attempt); duration < initialInterval {
+		if duration := f.backoff.ForAttempt(attempt); duration < initialInterval || initialInterval < 0 { //meta-improve
 			initialInterval = duration
 		}
 	}

@@ -34,6 +34,7 @@ import (
 	"github.com/metacubex/mihomo/log"
 	R "github.com/metacubex/mihomo/rules"
 	RC "github.com/metacubex/mihomo/rules/common"
+	RG "github.com/metacubex/mihomo/rules/geo_asn_ruleset"
 	RP "github.com/metacubex/mihomo/rules/provider"
 	RW "github.com/metacubex/mihomo/rules/wrapper"
 	T "github.com/metacubex/mihomo/tunnel"
@@ -268,12 +269,12 @@ type RawTun struct {
 	Stack               C.TUNStack `yaml:"stack" json:"stack"`
 	DNSHijack           []string   `yaml:"dns-hijack" json:"dns-hijack"`
 	AutoRoute           bool       `yaml:"auto-route" json:"auto-route"`
-	AutoDetectInterface bool       `yaml:"auto-detect-interface"`
+	AutoDetectInterface bool       `yaml:"auto-detect-interface" json:"auto-detect-interface"` //meta-improve
 
-	MTU        uint32 `yaml:"mtu" json:"mtu,omitempty"`
-	GSO        bool   `yaml:"gso" json:"gso,omitempty"`
-	GSOMaxSize uint32 `yaml:"gso-max-size" json:"gso-max-size,omitempty"`
-	//Inet4Address           []netip.Prefix `yaml:"inet4-address" json:"inet4-address,omitempty"`
+	MTU                    uint32         `yaml:"mtu" json:"mtu,omitempty"`
+	GSO                    bool           `yaml:"gso" json:"gso,omitempty"`
+	GSOMaxSize             uint32         `yaml:"gso-max-size" json:"gso-max-size,omitempty"`
+	Inet4Address           []netip.Prefix `yaml:"inet4-address" json:"inet4-address,omitempty"` //meta-improve
 	Inet6Address           []netip.Prefix `yaml:"inet6-address" json:"inet6-address,omitempty"`
 	IPRoute2TableIndex     int            `yaml:"iproute2-table-index" json:"iproute2-table-index,omitempty"`
 	IPRoute2RuleIndex      int            `yaml:"iproute2-rule-index" json:"iproute2-rule-index,omitempty"`
@@ -697,7 +698,7 @@ func ParseRawConfig(rawCfg *RawConfig) (*Config, error) {
 	}
 	config.DNS = dnsCfg
 
-	err = parseTun(rawCfg.Tun, dnsCfg, config.General)
+	err = parseTun(&rawCfg.Tun, dnsCfg, config.General) //meta-improve
 	if err != nil {
 		return nil, err
 	}
@@ -1073,11 +1074,13 @@ func parseRules(rulesConfig []string, proxies map[string]C.Proxy, ruleProviders 
 			}
 		}
 
-		parsed, parseErr := R.ParseRule(tp, payload, target, params, subRules)
+		parsed, ignore, parseErr := R.ParseRule(tp, payload, target, params, subRules) // meta-improve
 		if parseErr != nil {
 			return nil, fmt.Errorf("%s[%d] [%s] error: %s", format, idx, line, parseErr.Error())
 		}
-
+		if ignore { // meta-improve
+			continue
+		}
 		for _, name := range parsed.ProviderNames() {
 			if _, ok := ruleProviders[name]; !ok {
 				return nil, fmt.Errorf("%s[%d] [%s] error: rule set [%s] not found", format, idx, line, name)
@@ -1342,7 +1345,7 @@ func parseNameServerPolicy(nsPolicy *orderedmap.OrderedMap[string, any], rulePro
 			policy[idx] = dns.Policy{Matcher: matcher, NameServers: nameservers}
 		} else if strings.HasPrefix(domain, "geosite:") {
 			country := domain[8:]
-			matcher, err := RC.NewGEOSITE(country, "dns.nameserver-policy")
+			matcher, err := RG.NewGEOSITERuleset(country, "dns.nameserver-policy") //meta-improve
 			if err != nil {
 				return nil, err
 			}
@@ -1505,11 +1508,19 @@ func parseDNS(rawCfg *RawConfig, ruleProviders map[string]P.RuleProvider) (*DNS,
 
 	if len(cfg.Fallback) != 0 {
 		if cfg.FallbackFilter.GeoIP {
-			matcher, err := RC.NewGEOIP(cfg.FallbackFilter.GeoIPCode, "dns.fallback-filter.geoip", false, true)
-			if err != nil {
-				return nil, fmt.Errorf("load GeoIP dns fallback filter error, %w", err)
+			if strings.ToLower(cfg.FallbackFilter.GeoIPCode) == "lan" { //meta-improve
+				matcher, err := RG.NewGEOIPLan(cfg.FallbackFilter.GeoIPCode, "dns.fallback-filter.geoip", false, true)
+				if err != nil {
+					return nil, fmt.Errorf("load GeoIP dns fallback filter error, %w", err)
+				}
+				dnsCfg.FallbackIPFilter = append(dnsCfg.FallbackIPFilter, matcher.DnsFallbackFilter())
+			} else { //meta-improve
+				matcher, err := RG.NewGEOIPRuleset(cfg.FallbackFilter.GeoIPCode, "dns.fallback-filter.geoip", false, true)
+				if err != nil {
+					return nil, fmt.Errorf("load GeoIP dns fallback filter error, %w", err)
+				}
+				dnsCfg.FallbackIPFilter = append(dnsCfg.FallbackIPFilter, matcher.DnsFallbackFilter())
 			}
-			dnsCfg.FallbackIPFilter = append(dnsCfg.FallbackIPFilter, matcher.DnsFallbackFilter())
 		}
 		if len(cfg.FallbackFilter.IPCIDR) > 0 {
 			cidrSet := cidr.NewIpCidrSet()
@@ -1539,8 +1550,8 @@ func parseDNS(rawCfg *RawConfig, ruleProviders map[string]P.RuleProvider) (*DNS,
 		}
 		if len(cfg.FallbackFilter.GeoSite) > 0 {
 			log.Warnln("replace fallback-filter.geosite with nameserver-policy, it will be removed in the future")
-			for idx, geoSite := range cfg.FallbackFilter.GeoSite {
-				matcher, err := RC.NewGEOSITE(geoSite, "dns.fallback-filter.geosite")
+			for idx, geoSite := range cfg.FallbackFilter.GeoSite { //meta-improve
+				matcher, err := RG.NewGEOSITERuleset(geoSite, "dns.fallback-filter.geosite") //meta-improve
 				if err != nil {
 					return nil, fmt.Errorf("DNS FallbackGeosite[%d] format error: %w", idx, err)
 				}
@@ -1618,12 +1629,13 @@ func parseIPV6(rawCfg *RawConfig) {
 	}
 }
 
-func parseTun(rawTun RawTun, dns *DNS, general *General) error {
+func parseTun(rawTun *RawTun, dns *DNS, general *General) error { //meta-improve
 	tunAddressPrefix := dns.FakeIPRange
 	if !tunAddressPrefix.IsValid() {
 		tunAddressPrefix = netip.MustParsePrefix("198.18.0.1/16")
 	}
 	tunAddressPrefix = netip.PrefixFrom(tunAddressPrefix.Addr(), 30)
+	rawTun.Inet4Address = []netip.Prefix{tunAddressPrefix} //meta-improve
 
 	general.Tun = LC.Tun{
 		Enable:              rawTun.Enable,
@@ -1796,7 +1808,11 @@ func parseIPCIDR(addresses []string, cidrSet *cidr.IpCidrSet, adapterName string
 			subkeys = subkeys[1:]
 			subkeys = strings.Split(subkeys[0], ",")
 			for _, country := range subkeys {
-				matcher, err = RC.NewGEOIP(country, adapterName, false, false)
+				if strings.ToLower(country) == "lan" { //meta-improve
+					matcher, err = RG.NewGEOIPLan(country, adapterName, false, false)
+				} else { //meta-improve
+					matcher, err = RG.NewGEOIPRuleset(country, adapterName, false, false)
+				}
 				if err != nil {
 					return nil, err
 				}
@@ -1843,7 +1859,7 @@ func parseDomain(domains []string, domainTrie *trie.DomainTrie[struct{}], adapte
 			subkeys = subkeys[1:]
 			subkeys = strings.Split(subkeys[0], ",")
 			for _, country := range subkeys {
-				matcher, err = RC.NewGEOSITE(country, adapterName)
+				matcher, err = RG.NewGEOSITERuleset(country, adapterName) //meta-improve
 				if err != nil {
 					return nil, err
 				}

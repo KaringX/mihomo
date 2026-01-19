@@ -39,20 +39,23 @@ func (c *classicalStrategy) Reset() {
 }
 
 func (c *classicalStrategy) Insert(rule string) {
-	r, err := c.payloadToRule(rule)
+	r, ignore, err := c.payloadToRule(rule) // meta-improve
 	if err != nil {
 		log.Warnln("parse classical rule [%s] error: %s", rule, err.Error())
 	} else {
+		if ignore { // meta-improve
+			return
+		}
 		c.rules = append(c.rules, r)
 		c.count++
 	}
 }
 
-func (c *classicalStrategy) payloadToRule(rule string) (C.Rule, error) {
+func (c *classicalStrategy) payloadToRule(rule string) (C.Rule, bool, error) { // meta-improve
 	tp, payload, target, params := common.ParseRulePayload(rule, false)
 	switch tp {
 	case "MATCH", "RULE-SET", "SUB-RULE":
-		return nil, fmt.Errorf("unsupported rule type on classical rule-set: %s", tp)
+		return nil, false, fmt.Errorf("unsupported rule type on classical rule-set: %s", tp) //meta-improve
 	}
 	return c.parse(tp, payload, target, params, nil)
 }

@@ -22,8 +22,9 @@ func connectionRouter() http.Handler {
 }
 
 func getConnections(w http.ResponseWriter, r *http.Request) {
+	noConnections := r.URL.Query().Get("noConnections") //meta-improve
 	if !(r.Header.Get("Upgrade") == "websocket") {
-		snapshot := statistic.DefaultManager.Snapshot()
+		snapshot := statistic.DefaultManager.Snapshot(noConnections != "true") //meta-improve
 		render.JSON(w, r, snapshot)
 		return
 	}
@@ -49,7 +50,7 @@ func getConnections(w http.ResponseWriter, r *http.Request) {
 	buf := &bytes.Buffer{}
 	sendSnapshot := func() error {
 		buf.Reset()
-		snapshot := statistic.DefaultManager.Snapshot()
+		snapshot := statistic.DefaultManager.Snapshot(noConnections != "true") //meta-improve
 		if err := json.NewEncoder(buf).Encode(snapshot); err != nil {
 			return err
 		}
