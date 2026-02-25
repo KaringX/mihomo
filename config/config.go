@@ -992,6 +992,14 @@ func parseRuleProviders(cfg *RawConfig) (ruleProviders map[string]P.RuleProvider
 	ruleProviders = map[string]P.RuleProvider{}
 	// parse rule provider
 	for name, mapping := range cfg.RuleProvider {
+		proxy := mapping["proxy"] // meta-improve
+		if proxy != nil {         // meta-improve
+			proxyStr, ok := proxy.(string)
+			if ok && proxyStr != "DIRECT" && proxyStr != "REJECT" && proxyStr != "REJECT-DROP" && proxyStr != "COMPATIBLE" && proxyStr != "PASS" {
+				proxyStr = RC.HookProxyGroup(proxyStr)
+				mapping["proxy"] = proxyStr
+			}
+		}
 		rp, err := RP.ParseRuleProvider(name, mapping, R.ParseRule)
 		if err != nil {
 			return nil, err
@@ -1074,7 +1082,11 @@ func parseRules(rulesConfig []string, proxies map[string]C.Proxy, ruleProviders 
 		if target == "" {
 			return nil, fmt.Errorf("%s[%d] [%s] error: format invalid", format, idx, line)
 		}
-
+		if target != "DIRECT" && target != "REJECT" && target != "REJECT-DROP" && target != "COMPATIBLE" && target != "PASS" { // meta-improve
+			oldTarget := target
+			target = RC.HookProxyGroup(target)
+			rulesConfig[idx] = strings.Replace(line, oldTarget, target, 1)
+		}
 		if _, ok := proxies[target]; !ok {
 			if tp != "SUB-RULE" {
 				return nil, fmt.Errorf("%s[%d] [%s] error: proxy [%s] not found", format, idx, line, target)

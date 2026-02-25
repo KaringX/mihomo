@@ -79,3 +79,8 @@ func ParseRulePayload(ruleRaw string, needTarget bool) (tp, payload, target stri
 }
 
 type ParseRuleFunc func(tp, payload, target string, params []string, subRules map[string][]C.Rule) (C.Rule, bool, error) // meta-improve
+type HookProxyGroupFunc func(proxyName string) string
+
+var (
+	HookProxyGroup HookProxyGroupFunc
+)
