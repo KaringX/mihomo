@@ -2,6 +2,7 @@ package cachefile
 
 import (
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,6 +17,7 @@ var (
 	initOnce     sync.Once
 	fileMode     os.FileMode = 0o666
 	defaultCache *CacheFile
+	selectPrefix string //meta-improve
 
 	bucketSelected         = []byte("selected")
 	bucketFakeip           = []byte("fakeip")
@@ -29,6 +31,10 @@ type CacheFile struct {
 	DB *bbolt.DB
 }
 
+func (c *CacheFile) SetSelectedPrefix(prefix string) { //meta-improve
+	selectPrefix = prefix
+}
+
 func (c *CacheFile) SetSelected(group, selected string) {
 	if !profile.StoreSelected.Load() {
 		return
@@ -36,6 +42,9 @@ func (c *CacheFile) SetSelected(group, selected string) {
 		return
 	}
 
+	if len(selectPrefix) > 0 { //meta-improve
+		group = selectPrefix + group
+	}
 	err := c.DB.Batch(func(t *bbolt.Tx) error {
 		bucket, err := t.CreateBucketIfNotExists(bucketSelected)
 		if err != nil {
@@ -64,8 +73,17 @@ func (c *CacheFile) SelectedMap() map[string]string {
 		}
 
 		c := bucket.Cursor()
+		newmapping := map[string]string{}
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			mapping[string(k)] = string(v)
+			if len(k) > 0 && strings.HasPrefix(string(k), selectPrefix) { //meta-improve
+				k = []byte(string(k)[len(selectPrefix):])
+				newmapping[string(k)] = string(v)
+			} else {
+				mapping[string(k)] = string(v)
+			}
+			for k, v := range newmapping { //meta-improve
+				mapping[string(k)] = string(v)
+			}
 		}
 		return nil
 	})
