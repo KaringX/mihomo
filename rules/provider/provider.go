@@ -14,6 +14,7 @@ import (
 	"github.com/metacubex/mihomo/component/resource"
 	C "github.com/metacubex/mihomo/constant"
 	P "github.com/metacubex/mihomo/constant/provider"
+	"github.com/metacubex/mihomo/log"
 	"github.com/metacubex/mihomo/rules/common"
 )
 
@@ -241,6 +242,7 @@ func rulesParse(buf []byte, strategy ruleStrategy, format P.RuleFormat) (ruleStr
 			err := yaml.Unmarshal(firstLineBuffer.Bytes(), schema)
 			firstLineBuffer.Truncate(firstLineLength)
 			if err != nil {
+				log.Errorln("rulesParse error: %v : %s", err, firstLineBuffer.String()) // meta-improve
 				continue
 			}
 

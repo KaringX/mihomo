@@ -46,7 +46,7 @@ func (om *OrderedMap[K, V]) MarshalYAML() (interface{}, error) {
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
 func (om *OrderedMap[K, V]) UnmarshalYAML(value *yaml.Node) error {
 	if value.Kind != yaml.MappingNode {
-		return fmt.Errorf("pipeline must contain YAML mapping, has %v", value.Kind)
+		return fmt.Errorf("pipeline must contain YAML mapping, has %v, value=%s, line=%d", value.Kind, value.Value, value.Line) //meta-improve
 	}
 
 	if om.list == nil {
