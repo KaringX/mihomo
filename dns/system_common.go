@@ -18,7 +18,7 @@ func (c *systemClient) getDnsClients() ([]dnsClient, bool, error) { // meta-impr
 	var err error
 	if time.Since(c.lastFlush) > SystemDnsFlushTime {
 		var nameservers []string
-		if nameservers, err = dnsReadConfig(); err == nil {
+		if nameservers, err = dnsReadConfig(); err == nil && len(nameservers) > 0 { // meta-improve
 			log.Debugln("[DNS] system dns update to %s", nameservers)
 			for _, addr := range nameservers {
 				if resolver.IsSystemDnsBlacklisted(addr) {
