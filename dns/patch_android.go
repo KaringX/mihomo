@@ -26,8 +26,8 @@ func UpdateSystemDNS(addr []string) {
 	systemResolver = transform(ns, nil)
 }
 
-func (c *systemClient) getDnsClients() ([]dnsClient, error) {
-	return systemResolver, nil
+func (c *systemClient) getDnsClients() ([]dnsClient, bool, error) { // meta-improve
+	return systemResolver, false, nil // meta-improve
 }
 
 func (c *systemClient) ResetConnection() {

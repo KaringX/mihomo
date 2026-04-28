@@ -12,7 +12,7 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-func (c *systemClient) getDnsClients() ([]dnsClient, error) {
+func (c *systemClient) getDnsClients() ([]dnsClient, bool, error) { // meta-improve
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	var err error
@@ -56,6 +56,8 @@ func (c *systemClient) getDnsClients() ([]dnsClient, error) {
 			if available > 0 {
 				c.lastFlush = time.Now()
 			}
+		} else { // meta-improve
+			c.lastFlush = time.Now().Add(SystemDnsFlushTime / 2)
 		}
 	}
 	dnsClients := make([]dnsClient, 0, len(c.dnsClients))
@@ -64,10 +66,14 @@ func (c *systemClient) getDnsClients() ([]dnsClient, error) {
 			dnsClients = append(dnsClients, sdc.dnsClient)
 		}
 	}
-	if len(dnsClients) > 0 {
-		return dnsClients, nil
+	if len(dnsClients) == 0 && len(c.defaultNS) > 0 { // meta-improve
+		dnsClients = c.defaultNS
+		return dnsClients, true, nil
 	}
-	return nil, err
+	if len(dnsClients) > 0 {
+		return dnsClients, false, nil // meta-improve
+	}
+	return nil, false, err // meta-improve
 }
 
 func (c *systemClient) ResetConnection() {}

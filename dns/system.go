@@ -30,11 +30,11 @@ type systemClient struct {
 }
 
 func (c *systemClient) ExchangeContext(ctx context.Context, m *D.Msg) (msg *D.Msg, err error) {
-	dnsClients, err := c.getDnsClients()
-	if len(dnsClients) == 0 && len(c.defaultNS) > 0 {
-		dnsClients = c.defaultNS
-		err = nil
-	}
+	dnsClients, _, err := c.getDnsClients() // meta-improve
+	//if len(dnsClients) == 0 && len(c.defaultNS) > 0 {// meta-improve
+	//	dnsClients = c.defaultNS
+	//	err = nil
+	//}
 	if err != nil {
 		return
 	}
@@ -44,17 +44,17 @@ func (c *systemClient) ExchangeContext(ctx context.Context, m *D.Msg) (msg *D.Ms
 
 // Address implements dnsClient
 func (c *systemClient) Address() string {
-	dnsClients, _ := c.getDnsClients()
-	isDefault := ""
-	if len(dnsClients) == 0 && len(c.defaultNS) > 0 {
+	dnsClients, isDefault, _ := c.getDnsClients() // meta-improve
+	isDefaultStr := ""                            // meta-improve
+	if isDefault {                                // meta-improve
 		dnsClients = c.defaultNS
-		isDefault = "[defaultNS]"
+		isDefaultStr = "[defaultNS]" // meta-improve
 	}
 	addrs := make([]string, 0, len(dnsClients))
 	for _, c := range dnsClients {
 		addrs = append(addrs, c.Address())
 	}
-	return fmt.Sprintf("system%s(%s)", isDefault, strings.Join(addrs, ","))
+	return fmt.Sprintf("system%s(%s)", isDefaultStr, strings.Join(addrs, ",")) // meta-improve
 }
 
 var _ dnsClient = (*systemClient)(nil)
@@ -68,7 +68,7 @@ func newSystemClient() *systemClient {
 func init() {
 	r := NewResolver(Config{})
 	c := newSystemClient()
-	c.defaultNS = transform([]NameServer{{Addr: "114.114.114.114:53"}, {Addr: "8.8.8.8:53"}}, nil)
+	c.defaultNS = transform([]NameServer{{Addr: "114.114.114.114:53"}, {Addr: "8.8.8.8:53"}, {Addr: "223.6.6.6:53"}}, nil) // meta-improve
 	r.main = []dnsClient{c}
 	resolver.SystemResolver = r
 }
