@@ -8,6 +8,8 @@ import (
 	"net/netip"
 	"os"
 	"strings"
+
+	"github.com/metacubex/mihomo/component/resolver"
 )
 
 const resolvConf = "/etc/resolv.conf"
@@ -34,7 +36,9 @@ func dnsReadConfig() (servers []string, err error) {
 		case "nameserver": // add one name server
 			if len(f) > 1 {
 				if addr, err := netip.ParseAddr(f[1]); err == nil {
-					servers = append(servers, addr.String())
+					if !resolver.IsSystemDnsBlacklisted(addr.String()) { // meta-improve
+						servers = append(servers, addr.String())
+					}
 				}
 			}
 		}

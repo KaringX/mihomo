@@ -47,7 +47,7 @@ func (c *systemClient) Address() string {
 	dnsClients, isDefault, _ := c.getDnsClients() // meta-improve
 	isDefaultStr := ""                            // meta-improve
 	if isDefault {                                // meta-improve
-		dnsClients = c.defaultNS
+		//dnsClients = c.defaultNS // meta-improve
 		isDefaultStr = "[defaultNS]" // meta-improve
 	}
 	addrs := make([]string, 0, len(dnsClients))

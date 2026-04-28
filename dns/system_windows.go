@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"unsafe"
 
+	"github.com/metacubex/mihomo/component/resolver"
 	"golang.org/x/exp/slices"
 	"golang.org/x/sys/windows"
 )
@@ -56,6 +57,9 @@ func dnsReadConfig() (servers []string, err error) {
 			}
 			ipStr := ip.String()
 			if slices.Contains(servers, ipStr) {
+				continue
+			}
+			if resolver.IsSystemDnsBlacklisted(ipStr) { // meta-improve
 				continue
 			}
 			servers = append(servers, ipStr)
