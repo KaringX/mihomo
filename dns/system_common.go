@@ -4,6 +4,7 @@ package dns
 
 import (
 	"net"
+	"strings"
 	"time"
 
 	"github.com/metacubex/mihomo/component/resolver"
@@ -67,6 +68,11 @@ func (c *systemClient) getDnsClients() ([]dnsClient, bool, error) { // meta-impr
 		}
 	}
 	if len(dnsClients) == 0 && len(c.defaultNS) > 0 { // meta-improve
+		addrs := make([]string, 0, len(c.defaultNS))
+		for _, c := range c.defaultNS {
+			addrs = append(addrs, c.Address())
+		}
+		log.Debugln("[DNS] system dns downgrade to defaultNS: %s", strings.Join(addrs, ","))
 		dnsClients = c.defaultNS
 		return dnsClients, true, nil
 	}
