@@ -60,17 +60,16 @@ func (c *systemClient) Address() string {
 var _ dnsClient = (*systemClient)(nil)
 
 func newSystemClient() *systemClient {
-	client := &systemClient{ // meta-improve
+	return &systemClient{ // meta-improve
 		dnsClients: map[string]*systemDnsClient{},
+		defaultNS:  transform([]NameServer{{Addr: "114.114.114.114:53"}, {Addr: "8.8.8.8:53"}, {Addr: "223.6.6.6:53"}}, nil), // meta-improve
 	}
-	client.defaultNS = transform([]NameServer{{Addr: "114.114.114.114:53"}, {Addr: "8.8.8.8:53"}, {Addr: "223.6.6.6:53"}}, nil) // meta-improve
-	return client                                                                                                               // meta-improve
 }
 
 func init() {
 	r := NewResolver(Config{})
 	c := newSystemClient()
-	c.defaultNS = transform([]NameServer{{Addr: "114.114.114.114:53"}, {Addr: "8.8.8.8:53"}, {Addr: "223.6.6.6:53"}}, nil) // meta-improve
+	//c.defaultNS = transform([]NameServer{{Addr: "114.114.114.114:53"}, {Addr: "8.8.8.8:53"}}, nil) // meta-improve
 	r.main = []dnsClient{c}
 	resolver.SystemResolver = r
 }
