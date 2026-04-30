@@ -1,4 +1,6 @@
-//go:build linux || darwin
+//go:build (linux && !android) || darwin
+
+// //go:build linux || darwin //meta-improve
 
 package ntp
 
