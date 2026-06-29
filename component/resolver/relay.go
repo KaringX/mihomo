@@ -47,7 +47,7 @@ func RelayDnsConn(ctx context.Context, conn net.Conn, readTimeout time.Duration)
 			defer cancel()
 			inData := buff[:n]
 			outBuff := buff[2:]
-			_, msg, err := relayDnsPacket(ctx, inData, outBuff, 0)
+			_, msg, err := relayDnsPacket(ctx, inData, outBuff, 0) // Meta-Improve
 			if err != nil {
 				return err
 			}
