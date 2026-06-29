@@ -107,7 +107,7 @@ func (d *dnsPacketConn) WriteTo(p []byte, addr net.Addr) (n int, err error) {
 		ctx, cancel := context.WithTimeout(d.ctx, resolver.DefaultDnsRelayTimeout)
 		defer cancel()
 
-		buf, err := resolver.RelayDnsPacket(ctx, buf[:len(p)], buf)
+		_, buf, err := resolver.RelayDnsPacket(ctx, buf[:len(p)], buf) // Meta-Improve
 		if err != nil {
 			put()
 			return

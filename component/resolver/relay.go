@@ -47,7 +47,7 @@ func RelayDnsConn(ctx context.Context, conn net.Conn, readTimeout time.Duration)
 			defer cancel()
 			inData := buff[:n]
 			outBuff := buff[2:]
-			msg, err := relayDnsPacket(ctx, inData, outBuff, 0)
+			_, msg, err := relayDnsPacket(ctx, inData, outBuff, 0)
 			if err != nil {
 				return err
 			}
@@ -76,17 +76,18 @@ func RelayDnsConn(ctx context.Context, conn net.Conn, readTimeout time.Duration)
 	return nil
 }
 
-func relayDnsPacket(ctx context.Context, payload []byte, target []byte, maxSize int) ([]byte, error) {
+func relayDnsPacket(ctx context.Context, payload []byte, target []byte, maxSize int) (*D.Msg, []byte, error) { // Meta-Improve
 	msg := &D.Msg{}
 	if err := msg.Unpack(payload); err != nil {
-		return nil, err
+		return msg, nil, err // Meta-Improve
 	}
 
 	r, err := ServeMsg(ctx, msg)
 	if err != nil {
 		m := new(D.Msg)
 		m.SetRcode(msg, D.RcodeServerFailure)
-		return m.PackBuffer(target)
+		packed, err := m.PackBuffer(target)
+		return msg, packed, err // Meta-Improve
 	}
 
 	r.SetRcode(msg, r.Rcode)
@@ -94,10 +95,11 @@ func relayDnsPacket(ctx context.Context, payload []byte, target []byte, maxSize 
 		r.Truncate(maxSize)
 	}
 	r.Compress = true
-	return r.PackBuffer(target)
+	packed, err := r.PackBuffer(target)
+	return r, packed, err // Meta-Improve
 }
 
 // RelayDnsPacket will truncate udp message up to SafeDnsPacketSize
-func RelayDnsPacket(ctx context.Context, payload []byte, target []byte) ([]byte, error) {
+func RelayDnsPacket(ctx context.Context, payload []byte, target []byte) (*D.Msg, []byte, error) { // Meta-Improve
 	return relayDnsPacket(ctx, payload, target, SafeDnsPacketSize)
 }

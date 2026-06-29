@@ -50,7 +50,7 @@ func dohHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), resolver.DefaultDNSTimeout)
 	defer cancel()
 
-	dnsData, err = resolver.RelayDnsPacket(ctx, dnsData, dnsData)
+	_, dnsData, err = resolver.RelayDnsPacket(ctx, dnsData, dnsData) // Meta-Improve
 	if err != nil {
 		render.Status(r, http.StatusInternalServerError)
 		render.PlainText(w, r, err.Error())

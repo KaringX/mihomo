@@ -359,6 +359,10 @@ func msgToHTTPSRRInfo(msg *D.Msg) string {
 	return strings.Join(parts, ";")
 }
 
+func MsgToLogString(msg *D.Msg) string { // Meta-Improve
+	return msgToLogString(msg)
+}
+
 func msgToLogString(msg *D.Msg) string {
 	qType, qTypeStr := msgToQtype(msg)
 	switch qType {

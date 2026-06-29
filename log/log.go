@@ -38,6 +38,9 @@ func (e *Event) Type() string {
 }
 
 func Infoln(format string, v ...any) {
+	if INFO < level { // Meta-Improve
+		return
+	}
 	_, file, line, _ := runtime.Caller(1)                              // Meta-Improve
 	location := " " + path.Base(file) + ":" + strconv.Itoa(line) + " " // Meta-Improve
 	event := newLog(INFO, location+fmt.Sprintf(format, v...))          // Meta-Improve
@@ -46,6 +49,9 @@ func Infoln(format string, v ...any) {
 }
 
 func Warnln(format string, v ...any) {
+	if WARNING < level { // Meta-Improve
+		return
+	}
 	_, file, line, _ := runtime.Caller(1)                              // Meta-Improve
 	location := " " + path.Base(file) + ":" + strconv.Itoa(line) + " " // Meta-Improve
 	event := newLog(WARNING, location+fmt.Sprintf(format, v...))       // Meta-Improve
@@ -54,6 +60,9 @@ func Warnln(format string, v ...any) {
 }
 
 func Errorln(format string, v ...any) {
+	if ERROR < level { // Meta-Improve
+		return
+	}
 	_, file, line, _ := runtime.Caller(1)                              // Meta-Improve
 	location := " " + path.Base(file) + ":" + strconv.Itoa(line) + " " // Meta-Improve
 	event := newLog(ERROR, location+fmt.Sprintf(format, v...))         // Meta-Improve
@@ -62,6 +71,9 @@ func Errorln(format string, v ...any) {
 }
 
 func Debugln(format string, v ...any) {
+	if DEBUG < level { // Meta-Improve
+		return
+	}
 	_, file, line, _ := runtime.Caller(1)                              // Meta-Improve
 	location := " " + path.Base(file) + ":" + strconv.Itoa(line) + " " // Meta-Improve
 	event := newLog(DEBUG, location+fmt.Sprintf(format, v...))         // Meta-Improve

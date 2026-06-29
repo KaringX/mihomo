@@ -9,9 +9,9 @@ import (
 
 	"github.com/metacubex/mihomo/component/resolver"
 	C "github.com/metacubex/mihomo/constant"
+	"github.com/metacubex/mihomo/dns"
 	"github.com/metacubex/mihomo/listener/sing"
 	"github.com/metacubex/mihomo/log"
-
 	"github.com/metacubex/sing/common/buf"
 	"github.com/metacubex/sing/common/bufio"
 	M "github.com/metacubex/sing/common/metadata"
@@ -44,7 +44,7 @@ func (h *ListenerHandler) NewPacket(ctx context.Context, key netip.AddrPort, buf
 			RearHeadroom:  network.CalculateRearHeadroom(writer),
 			MTU:           resolver.SafeDnsPacketSize,
 		}
-		go relayDnsPacket(ctx, buffer, rwOptions, metadata.Destination, nil, &writer)
+		go relayDnsPacket(ctx, buffer, rwOptions, metadata.Destination, nil, &writer) // Meta-Improve
 		return
 	}
 	h.ListenerHandler.NewPacket(ctx, key, buffer, metadata, init)
@@ -112,7 +112,8 @@ func relayDnsPacket(ctx context.Context, readBuff *buf.Buffer, rwOptions network
 	if len(writeBuff.FreeBytes()) < resolver.SafeDnsPacketSize { // only create a new buffer when space don't enough
 		writeBuff = rwOptions.NewPacketBuffer()
 	}
-	msg, err := resolver.RelayDnsPacket(ctx, inData, writeBuff.FreeBytes())
+	dmsg, msg, err := resolver.RelayDnsPacket(ctx, inData, writeBuff.FreeBytes())                      // Meta-Improve
+	log.Debugln("[DNS] relayDnsPacket:%v %s %s", err, dmsg.Question[0].Name, dns.MsgToLogString(dmsg)) // Meta-Improve
 	if writeBuff != readBuff {
 		readBuff.Release()
 	}
