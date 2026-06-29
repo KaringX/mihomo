@@ -3,6 +3,9 @@ package log
 import (
 	"fmt"
 	"os"
+	"path"
+	"runtime"
+	"strconv"
 
 	"github.com/metacubex/mihomo/common/observable"
 
@@ -35,31 +38,41 @@ func (e *Event) Type() string {
 }
 
 func Infoln(format string, v ...any) {
-	event := newLog(INFO, format, v...)
+	_, file, line, _ := runtime.Caller(1)                              // Meta-Improve
+	location := " " + path.Base(file) + ":" + strconv.Itoa(line) + " " // Meta-Improve
+	event := newLog(INFO, location+fmt.Sprintf(format, v...))          // Meta-Improve
 	logCh <- event
 	print(event)
 }
 
 func Warnln(format string, v ...any) {
-	event := newLog(WARNING, format, v...)
+	_, file, line, _ := runtime.Caller(1)                              // Meta-Improve
+	location := " " + path.Base(file) + ":" + strconv.Itoa(line) + " " // Meta-Improve
+	event := newLog(WARNING, location+fmt.Sprintf(format, v...))       // Meta-Improve
 	logCh <- event
 	print(event)
 }
 
 func Errorln(format string, v ...any) {
-	event := newLog(ERROR, format, v...)
+	_, file, line, _ := runtime.Caller(1)                              // Meta-Improve
+	location := " " + path.Base(file) + ":" + strconv.Itoa(line) + " " // Meta-Improve
+	event := newLog(ERROR, location+fmt.Sprintf(format, v...))         // Meta-Improve
 	logCh <- event
 	print(event)
 }
 
 func Debugln(format string, v ...any) {
-	event := newLog(DEBUG, format, v...)
+	_, file, line, _ := runtime.Caller(1)                              // Meta-Improve
+	location := " " + path.Base(file) + ":" + strconv.Itoa(line) + " " // Meta-Improve
+	event := newLog(DEBUG, location+fmt.Sprintf(format, v...))         // Meta-Improve
 	logCh <- event
 	print(event)
 }
 
 func Fatalln(format string, v ...any) {
-	log.Fatalf(format, v...)
+	_, file, line, _ := runtime.Caller(1)                              // Meta-Improve
+	location := " " + path.Base(file) + ":" + strconv.Itoa(line) + " " // Meta-Improve
+	log.Fatalf(location + fmt.Sprintf(format, v...))                   // Meta-Improve
 }
 
 func Subscribe() observable.Subscription[Event] {
