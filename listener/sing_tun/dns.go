@@ -112,8 +112,10 @@ func relayDnsPacket(ctx context.Context, readBuff *buf.Buffer, rwOptions network
 	if len(writeBuff.FreeBytes()) < resolver.SafeDnsPacketSize { // only create a new buffer when space don't enough
 		writeBuff = rwOptions.NewPacketBuffer()
 	}
-	dmsg, msg, err := resolver.RelayDnsPacket(ctx, inData, writeBuff.FreeBytes())                      // Meta-Improve
-	log.Debugln("[DNS] relayDnsPacket:%v %s %s", err, dmsg.Question[0].Name, dns.MsgToLogString(dmsg)) // Meta-Improve
+	dmsg, msg, err := resolver.RelayDnsPacket(ctx, inData, writeBuff.FreeBytes()) // Meta-Improve
+	if len(dmsg.Question) > 0 {
+		log.Debugln("[DNS] relayDnsPacket:%v %s %s", err, dmsg.Question[0].Name, dns.MsgToLogString(dmsg)) // Meta-Improve
+	}
 	if writeBuff != readBuff {
 		readBuff.Release()
 	}
