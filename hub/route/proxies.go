@@ -131,7 +131,20 @@ func getProxyDelay(w http.ResponseWriter, r *http.Request) {
 		render.JSON(w, r, ErrRequestTimeout)
 		return
 	}
+	if err != nil { //Meta-Improve
+		render.JSON(w, r, render.M{
+			"err": err.Error(),
+		})
+		return
+	}
+	if delay == 0 { //Meta-Improve
+		render.JSON(w, r, render.M{
+			"err": "An error occurred in the delay test",
+		})
+		return
+	}
 
+	/*//Meta-Improve
 	if err != nil || delay == 0 {
 		render.Status(r, http.StatusServiceUnavailable)
 		if err != nil && delay != 0 {
@@ -141,6 +154,7 @@ func getProxyDelay(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	*/
 
 	render.JSON(w, r, render.M{
 		"delay": delay,
