@@ -103,8 +103,8 @@ func ApplyConfig(cfg *config.Config, force bool) (err error) { //meta-improve
 	updateSniffer(cfg.Sniffer)
 	updateHosts(cfg.Hosts)
 	updateGeneral(cfg.General, true)
-	updateNTP(cfg.NTP)
 	updateDNS(cfg.DNS, cfg.General.IPv6)
+	updateNTP(cfg.NTP)                                       // initialize NTP after DNS because an NTP server may be a hostname.
 	err = updateListeners(cfg.General, cfg.Listeners, force) //meta-improve
 	if err != nil {                                          //meta-improve
 		return err
