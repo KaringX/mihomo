@@ -12,7 +12,7 @@ func ParseProxy(mapping map[string]any, options ...ProxyOption) (C.Proxy, error)
 	decoder := structure.NewDecoder(structure.Option{TagName: "proxy", WeaklyTypedInput: true, KeyReplacer: structure.DefaultKeyReplacer})
 	proxyType, existType := mapping["type"].(string)
 	if !existType {
-		return nil, fmt.Errorf("missing type")
+		return nil, fmt.Errorf("name: %s, missing type", mapping["name"]) //meta-improve
 	}
 
 	opt := applyProxyOptions(options...)
@@ -224,10 +224,11 @@ func ParseProxy(mapping map[string]any, options ...ProxyOption) (C.Proxy, error)
 		}
 		proxy, err = outbound.NewEasyTier(*easyTierOption)
 	default:
-		return nil, fmt.Errorf("unsupport proxy type: %s", proxyType)
+		return nil, fmt.Errorf("name: %s, unsupport proxy type: %s", mapping["name"], proxyType) //meta-improve
 	}
 
 	if err != nil {
+		err = fmt.Errorf("name: %s, %w", mapping["name"], err) //meta-improve
 		return nil, err
 	}
 
@@ -235,11 +236,13 @@ func ParseProxy(mapping map[string]any, options ...ProxyOption) (C.Proxy, error)
 		muxOption := &outbound.SingMuxOption{}
 		err = decoder.Decode(muxMapping, muxOption)
 		if err != nil {
+			err = fmt.Errorf("name: %s, %w", mapping["name"], err) //meta-improve
 			return nil, err
 		}
 		if muxOption.Enabled {
 			proxy, err = outbound.NewSingMux(*muxOption, proxy)
 			if err != nil {
+				err = fmt.Errorf("name: %s, %w", mapping["name"], err) //meta-improve
 				return nil, err
 			}
 		}
